@@ -1,0 +1,82 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.32804.182
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CSGO", "CSGO\CSGO.csproj", "{91D73CDB-946E-4AC8-BFC8-C298A659BC5A}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CSGO.API", "CSGO.API\CSGO.API.csproj", "{928F71AB-7107-466C-AD20-6C533A5A58E6}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Runner", "Runner\Runner.csproj", "{82A4C001-3CB3-4CA9-A1E6-2F250E0383CC}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DemoInfo", "DemoInfo\DemoInfo.csproj", "{BE9DB651-33AF-40A3-8AA4-54E4093C26F2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemoReader", "DemoReader\DemoReader.csproj", "{DCCA9716-0555-485B-AEF5-A3C809B17A36}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Bitstream-Debugging|Any CPU = Bitstream-Debugging|Any CPU
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+		SavePropValues|Any CPU = SavePropValues|Any CPU
+		YoloDebug|Any CPU = YoloDebug|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{91D73CDB-946E-4AC8-BFC8-C298A659BC5A}.Bitstream-Debugging|Any CPU.ActiveCfg = Debug|Any CPU
+		{91D73CDB-946E-4AC8-BFC8-C298A659BC5A}.Bitstream-Debugging|Any CPU.Build.0 = Debug|Any CPU
+		{91D73CDB-946E-4AC8-BFC8-C298A659BC5A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{91D73CDB-946E-4AC8-BFC8-C298A659BC5A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{91D73CDB-946E-4AC8-BFC8-C298A659BC5A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{91D73CDB-946E-4AC8-BFC8-C298A659BC5A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{91D73CDB-946E-4AC8-BFC8-C298A659BC5A}.SavePropValues|Any CPU.ActiveCfg = Debug|Any CPU
+		{91D73CDB-946E-4AC8-BFC8-C298A659BC5A}.SavePropValues|Any CPU.Build.0 = Debug|Any CPU
+		{91D73CDB-946E-4AC8-BFC8-C298A659BC5A}.YoloDebug|Any CPU.ActiveCfg = Debug|Any CPU
+		{91D73CDB-946E-4AC8-BFC8-C298A659BC5A}.YoloDebug|Any CPU.Build.0 = Debug|Any CPU
+		{928F71AB-7107-466C-AD20-6C533A5A58E6}.Bitstream-Debugging|Any CPU.ActiveCfg = Debug|Any CPU
+		{928F71AB-7107-466C-AD20-6C533A5A58E6}.Bitstream-Debugging|Any CPU.Build.0 = Debug|Any CPU
+		{928F71AB-7107-466C-AD20-6C533A5A58E6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{928F71AB-7107-466C-AD20-6C533A5A58E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{928F71AB-7107-466C-AD20-6C533A5A58E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{928F71AB-7107-466C-AD20-6C533A5A58E6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{928F71AB-7107-466C-AD20-6C533A5A58E6}.SavePropValues|Any CPU.ActiveCfg = Debug|Any CPU
+		{928F71AB-7107-466C-AD20-6C533A5A58E6}.SavePropValues|Any CPU.Build.0 = Debug|Any CPU
+		{928F71AB-7107-466C-AD20-6C533A5A58E6}.YoloDebug|Any CPU.ActiveCfg = Debug|Any CPU
+		{928F71AB-7107-466C-AD20-6C533A5A58E6}.YoloDebug|Any CPU.Build.0 = Debug|Any CPU
+		{82A4C001-3CB3-4CA9-A1E6-2F250E0383CC}.Bitstream-Debugging|Any CPU.ActiveCfg = Debug|Any CPU
+		{82A4C001-3CB3-4CA9-A1E6-2F250E0383CC}.Bitstream-Debugging|Any CPU.Build.0 = Debug|Any CPU
+		{82A4C001-3CB3-4CA9-A1E6-2F250E0383CC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{82A4C001-3CB3-4CA9-A1E6-2F250E0383CC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{82A4C001-3CB3-4CA9-A1E6-2F250E0383CC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{82A4C001-3CB3-4CA9-A1E6-2F250E0383CC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{82A4C001-3CB3-4CA9-A1E6-2F250E0383CC}.SavePropValues|Any CPU.ActiveCfg = Debug|Any CPU
+		{82A4C001-3CB3-4CA9-A1E6-2F250E0383CC}.SavePropValues|Any CPU.Build.0 = Debug|Any CPU
+		{82A4C001-3CB3-4CA9-A1E6-2F250E0383CC}.YoloDebug|Any CPU.ActiveCfg = Debug|Any CPU
+		{82A4C001-3CB3-4CA9-A1E6-2F250E0383CC}.YoloDebug|Any CPU.Build.0 = Debug|Any CPU
+		{BE9DB651-33AF-40A3-8AA4-54E4093C26F2}.Bitstream-Debugging|Any CPU.ActiveCfg = Debug|Any CPU
+		{BE9DB651-33AF-40A3-8AA4-54E4093C26F2}.Bitstream-Debugging|Any CPU.Build.0 = Debug|Any CPU
+		{BE9DB651-33AF-40A3-8AA4-54E4093C26F2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BE9DB651-33AF-40A3-8AA4-54E4093C26F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BE9DB651-33AF-40A3-8AA4-54E4093C26F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BE9DB651-33AF-40A3-8AA4-54E4093C26F2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BE9DB651-33AF-40A3-8AA4-54E4093C26F2}.SavePropValues|Any CPU.ActiveCfg = Debug|Any CPU
+		{BE9DB651-33AF-40A3-8AA4-54E4093C26F2}.SavePropValues|Any CPU.Build.0 = Debug|Any CPU
+		{BE9DB651-33AF-40A3-8AA4-54E4093C26F2}.YoloDebug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BE9DB651-33AF-40A3-8AA4-54E4093C26F2}.YoloDebug|Any CPU.Build.0 = Debug|Any CPU
+		{DCCA9716-0555-485B-AEF5-A3C809B17A36}.Bitstream-Debugging|Any CPU.ActiveCfg = Debug|Any CPU
+		{DCCA9716-0555-485B-AEF5-A3C809B17A36}.Bitstream-Debugging|Any CPU.Build.0 = Debug|Any CPU
+		{DCCA9716-0555-485B-AEF5-A3C809B17A36}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DCCA9716-0555-485B-AEF5-A3C809B17A36}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DCCA9716-0555-485B-AEF5-A3C809B17A36}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DCCA9716-0555-485B-AEF5-A3C809B17A36}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DCCA9716-0555-485B-AEF5-A3C809B17A36}.SavePropValues|Any CPU.ActiveCfg = Debug|Any CPU
+		{DCCA9716-0555-485B-AEF5-A3C809B17A36}.SavePropValues|Any CPU.Build.0 = Debug|Any CPU
+		{DCCA9716-0555-485B-AEF5-A3C809B17A36}.YoloDebug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DCCA9716-0555-485B-AEF5-A3C809B17A36}.YoloDebug|Any CPU.Build.0 = Debug|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {EAF2CA08-D6A4-4B8E-9BD1-C360A42110A2}
+	EndGlobalSection
+EndGlobal
