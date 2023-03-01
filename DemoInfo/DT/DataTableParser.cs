@@ -69,11 +69,19 @@ namespace DemoInfo.DT
             {
                 FlattenDataTable(i);
             }
-        }
+
+            int idx = 0;
+            Console.WriteLine($"{ServerClasses[idx].Name} - {DataTables[ServerClasses[idx].DataTableID].Name}");
+			foreach (var prop in ServerClasses[idx].FlattenedProps)
+			{
+				Console.WriteLine($"    Type: {prop.Prop.Type}:{prop.Prop.Name} - {prop.Prop.Flags.HasFlag(SendPropertyFlags.Exclude)} - {prop.Prop.DataTableName}");
+			}
+		}
 
         private void FlattenDataTable(int serverClassIndex)
         {
-            SendTable table = DataTables[ServerClasses[serverClassIndex].DataTableID];
+            //Console.WriteLine($"Flattening {serverClassIndex}");
+            SendTable table = DataTables[ServerClasses[serverClassIndex].DataTableID];                                  // Get data table for class ID
 
             CurrentExcludes.Clear();
             CurrentBaseclasses = new List<ServerClass>(); //NOT .clear because we use *this* reference
@@ -86,6 +94,7 @@ namespace DemoInfo.DT
             GatherProps(table, serverClassIndex, "");
 
             var flattenedProps = ServerClasses[serverClassIndex].FlattenedProps;
+            //Console.WriteLine($"Props: {flattenedProps.Count}");
 
             List<int> priorities = new List<int>();
             priorities.Add(64);

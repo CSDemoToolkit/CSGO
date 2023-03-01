@@ -2,6 +2,16 @@
 
 namespace DemoReader
 {
+    public struct Entity
+    {
+        public int id;
+
+        public Entity(int id, in ServerClass serverClass)
+        {
+            this.id = id;
+        }
+    }
+
     public struct PacketEntities
     {
         public int maxEntries;
@@ -39,20 +49,18 @@ namespace DemoReader
                         bool shouldCreate = bitStream.ReadBit();
 
                         if (destroy)
-                        {
-                            //Console.WriteLine($"{currentEntity} - Destroy");
                             continue;
-                        }
 
                         if(shouldCreate) // If true create, if false just update
                         {
-                            //Console.WriteLine($"{currentEntity} - Create");
-                            //Console.WriteLine($"    {serverClasses.Length}-{BitOperations.Log2(BitOperations.RoundUpToPowerOf2((uint)serverClasses.Length))}");
-
                             int serverClassID = bitStream.ReadInt(serverClassesBits);
                             bitStream.ReadInt(10); //Entity serial. 
 
+                            //Console.WriteLine(serverClassID);
                             ref ServerClass serverClass = ref serverClasses[serverClassID];
+                            Entity entity = new Entity(currentEntity, serverClass);
+
+                            // Apply update with instance baseline to entity
                         }
                         else
                         {
@@ -64,11 +72,9 @@ namespace DemoReader
                         int index = -1;
                         var entries = new List<int>();
 
-                        //Console.WriteLine("     Reading Field Index");
                         //No read them. 
                         while ((index = ReadFieldIndex(ref bitStream, index, newWay)) != -1)
                         {
-                            //Console.WriteLine($"        {index}");
                             entries.Add(index);
                         }
 

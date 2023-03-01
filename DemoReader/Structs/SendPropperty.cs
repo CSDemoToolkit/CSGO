@@ -2,9 +2,9 @@
 {
     public struct SendPropperty
     {
-        public int type;
+        public SendPropertyType type;
         public string varName;
-        public int flags;
+        public SendPropertyFlags flags;
         public int priority;
         public string dtName;
         public int numElements;
@@ -45,10 +45,10 @@
                     switch (fieldnum)
                     {
                         case 1:
-                            prop.type = val;
+                            prop.type = (SendPropertyType)val;
                             break;
                         case 3:
-                            prop.flags = val;
+                            prop.flags = (SendPropertyFlags)val;
                             break;
                         case 4:
                             prop.priority = val;

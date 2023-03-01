@@ -32,8 +32,6 @@ namespace DemoInfo.DP.Handler
 
             int lastEntry = -1;
 
-            Console.WriteLine(table.Name);
-            Console.WriteLine(table.NumEntries);
             for (int i = 0; i < table.NumEntries; i++)
             {
                 int entryIndex = lastEntry + 1;
@@ -44,8 +42,6 @@ namespace DemoInfo.DP.Handler
                 }
 
                 lastEntry = entryIndex;
-
-                //Console.WriteLine($"    LastEntry: {lastEntry}, EntryIndex: {entryIndex}");
 
                 // Read the name of the string into entry.
                 string entry = "";

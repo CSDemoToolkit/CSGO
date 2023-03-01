@@ -1,6 +1,5 @@
-﻿namespace DemoReader
-{
-    public enum SVCMessages
+﻿namespace DemoReader {
+	public enum SVCMessages
     {
         svc_ServerInfo = 8,
         svc_SendTable = 9,

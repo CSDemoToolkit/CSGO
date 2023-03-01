@@ -3,7 +3,8 @@ using System.IO;
 
 namespace DemoInfo
 {
-    public struct PacketEntities
+
+	public struct PacketEntities
     {
         public int MaxEntries;
         public int UpdatedEntries;

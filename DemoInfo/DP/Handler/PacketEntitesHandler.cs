@@ -74,6 +74,7 @@ namespace DemoInfo.DP.Handler
             //Console.WriteLine($"    {parser.SendTableParser.ServerClasses.Count}-{parser.SendTableParser.ClassBits}");
 
             //So find the correct server class
+            //Console.WriteLine(serverClassID);
             ServerClass entityClass = parser.SendTableParser.ServerClasses[serverClassID];
 
             reader.ReadInt(10); //Entity serial. 

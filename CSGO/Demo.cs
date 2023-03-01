@@ -12,7 +12,7 @@ namespace CSGO
             //Console.WriteLine(parser.Map);
             //Console.WriteLine(parser.Header.PlaybackTicks);
 
-            //parser.PlayerKilled += Parser_PlayerKilled;
+            parser.PlayerKilled += Parser_PlayerKilled;
 
             //parser.TickDone += Parser_TickDone;
             //parser.RoundEnd += Parser_RoundEnd;

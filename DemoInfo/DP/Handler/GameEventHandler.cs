@@ -311,7 +311,7 @@ namespace DemoInfo.DP.Handler
 
                     int index = (int)data["index"];
 
-                    Console.WriteLine("Player connected");
+                    //Console.WriteLine("Player connected");
                     parser.RawPlayers[index] = player;
 
 
