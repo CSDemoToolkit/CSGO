@@ -9,7 +9,7 @@ namespace DemoInfo.Tests
         public void Parse_BasicDemo()
         {
             string fileName = "basic_demo.dem";
-            string path = Path.Combine(Environment.CurrentDirectory, @"Demos\", fileName);
+            string path = Path.Combine(Environment.CurrentDirectory, @"Demos/", fileName);
 
             Demo demo = new();
             demo.Analyze(path);
