@@ -62,7 +62,7 @@ namespace CSGO
 
         private void Parser_PlayerKilled(object? sender, PlayerKilledEventArgs e)
         {
-            Console.WriteLine($"    {e.Killer.Name}({e.Killer.EntityID}) killed {e.Victim.Name}({e.Victim.EntityID})");
+            //Console.WriteLine($"    {e.Killer.Name}({e.Killer.EntityID}) killed {e.Victim.Name}({e.Victim.EntityID})");
         }
     }
 }

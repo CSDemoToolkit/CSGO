@@ -49,10 +49,10 @@ namespace DemoInfo.DP.Handler
                 {
                     //Console.WriteLine($"{currentEntity} - Destroy");
                     Entity e = parser.Entities[currentEntity];
-                    e.ServerClass.AnnounceDestroyedEntity(e);
+                    e?.ServerClass.AnnounceDestroyedEntity(e);
 
                     // leave / destroy
-                    e.Leave();
+                    e?.Leave();
                     parser.Entities[currentEntity] = null;
 
                     //dunno, but you gotta read this.
