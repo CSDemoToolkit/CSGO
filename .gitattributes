@@ -61,3 +61,10 @@
 #*.PDF   diff=astextplain
 #*.rtf   diff=astextplain
 #*.RTF   diff=astextplain
+
+###############################################################################
+## GitLFS configuration
+## 
+## GitLFS keeps big files out of the working tree.
+################################################################################
+*.dem filter=lfs diff=lfs merge=lfs -text
