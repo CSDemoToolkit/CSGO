@@ -179,7 +179,7 @@ namespace DemoTracker
 			}
 		}
 
-		public T? FindValueSegment(int tick)
+		private T? FindValueSegment(int tick)
 		{
 			_currentSegmentStartTick = _segmentsByTick.Keys.LastOrDefault(x => x <= tick, -1);
 			if (_currentSegmentStartTick == -1)

@@ -109,7 +109,17 @@ namespace DemoInfo
             return new Vector() { X = a.X - b.X, Y = a.Y - b.Y, Z = a.Z - b.Z };
         }
 
-        public override string ToString()
+		public static bool operator ==(Vector a, Vector b)
+		{
+			return (a.X == b.X && a.Y == b.Y && a.Z == b.Z);
+		}
+
+		public static bool operator !=(Vector a, Vector b)
+		{
+			return !(a == b);
+		}
+
+		public override string ToString()
         {
             return "{X: " + X + ", Y: " + Y + ", Z: " + Z + " }";
         }

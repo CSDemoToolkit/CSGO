@@ -11,6 +11,7 @@
     <ProjectReference Include="..\CSGO.API\CSGO.API.csproj" />
     <ProjectReference Include="..\CSGO\CSGO.csproj" />
     <ProjectReference Include="..\DemoReader\DemoReader.csproj" />
+    <ProjectReference Include="..\DemoTracker\DemoTracker.csproj" />
   </ItemGroup>
 
   <ItemGroup>

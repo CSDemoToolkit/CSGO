@@ -2,7 +2,9 @@
 using CSGO.API.Faceit;
 using CSGO.API.Gamer;
 using DemoReader;
+using DemoTracker;
 using System.Diagnostics;
+using Tracker;
 
 namespace Runner
 {
@@ -13,19 +15,26 @@ namespace Runner
 
         static void Main(string[] args)
         {
-            Demo demo = new();
-            DemoReader.DemoReader demoReader = new();
-            Stopwatch sw = Stopwatch.StartNew();
+			string demoPath = "Demos/demo1.dem";
 
-            int useDemoInfo = 1;
+			Stopwatch sw = Stopwatch.StartNew();
 
+            int useDemoInfo = 2;
             if (useDemoInfo == 1)
             {
-                demo.Analyze("Demos/demo1.dem");
+				Demo demo = new();
+                demo.Analyze(demoPath);
             }
+			else if (useDemoInfo == 2)
+			{
+				DemoSummary demo = new DemoSummary(demoPath);
+				demo.Process();
+				demo.GetZantoxPositions();
+			}
             else
             {
-                demoReader.Analyze("Demos/demo1.dem");
+				DemoReader.DemoReader demoReader = new();
+                demoReader.Analyze(demoPath);
             }
             sw.Stop();
             Console.WriteLine(sw.ElapsedMilliseconds);
