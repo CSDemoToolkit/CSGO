@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Numerics;
 
 namespace DemoInfo
 {
@@ -123,6 +124,11 @@ namespace DemoInfo
         {
             return "{X: " + X + ", Y: " + Y + ", Z: " + Z + " }";
         }
+
+		public Vector3 ToNumericVector()
+		{
+			return new Vector3 { X = X, Y = Y, Z = Z };
+		}
     }
 
     /// <summary>

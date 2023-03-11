@@ -8,25 +8,44 @@ using System.Threading.Tasks;
 
 namespace DemoTracker
 {
-	public class ContinuousVariableTracker<T>
+	public class ContinuousVariableTracker<T> where T : unmanaged
 	{
 		private List<T> _values;
 		
 		private class ValueSegment
 		{
+			public int StartTick;
 			public int TickDuration;
 			public int ValuesIndex;
 
-			public ValueSegment(int valuesIndex)
+			public ValueSegment(int startTick, int valuesIndex)
 			{
+				StartTick = startTick;
 				TickDuration = 1;
 				ValuesIndex = valuesIndex;
 			}
+
+			public int EndTick
+			{
+				get { return StartTick + TickDuration - 1; }
+			}
+
+			public bool IsTickInsideSegment(int tick)
+			{
+				return tick >= StartTick && tick <= EndTick;
+			}
+
+			public int GetTickValuesIndex(int tick)
+			{
+				int ticksSinceStartOfSegment = tick - StartTick;
+				int tickValuesIndex = ValuesIndex + ticksSinceStartOfSegment;
+				return Math.Clamp(tickValuesIndex, ValuesIndex, ValuesIndex + TickDuration);
+			}
 		}
+
 		private SortedList<int, ValueSegment> _segmentsByTick;
 
-		private int _currentSegmentStartTick;
-		private ValueSegment _currentSegment;
+		private ValueSegment? _currentSegment;
 		private int _prevSegmentEndTick;
 		private int _nextSegmentStartTick;
 
@@ -35,8 +54,7 @@ namespace DemoTracker
 			_values = new List<T>();
 			_segmentsByTick = new SortedList<int, ValueSegment>();
 
-			_currentSegmentStartTick = -1;
-			_currentSegment = new ValueSegment(-1);
+			_currentSegment = null;
 			_prevSegmentEndTick = -1;
 			_nextSegmentStartTick = -1;
 		}
@@ -49,82 +67,42 @@ namespace DemoTracker
 				{
 					return 0;
 				}
-				var lastEntry = _segmentsByTick.Last();
-				int tickValueSegmentStarts = lastEntry.Key;
-				int valueSegmentDuration = lastEntry.Value.TickDuration;
-				return tickValueSegmentStarts + valueSegmentDuration;
+				ValueSegment lastSegment = _segmentsByTick.Last().Value;
+				return lastSegment.EndTick + 1;
 			}
 		}
 
 		public void Add(int tick, T? value)
 		{
-			if (value == null || EqualityComparer<T>.Default.Equals(value, default(T)))
+			if (value == null || EqualityComparer<T?>.Default.Equals(value, default(T)))
 			{
 				return;
 			}
 
-			bool valueInsertedInMiddle = false;
-			int closestSegmentStartTick = _segmentsByTick.Keys.LastOrDefault(x => x <= tick, -1);
-			if (closestSegmentStartTick == -1)
+			ValueSegment? segment = FindSegmentBeforeTick(tick);
+			int valuesIndex = segment?.GetTickValuesIndex(tick) ?? 0;
+			_values.Insert(valuesIndex, (T)value);
+			if (segment?.IsTickInsideSegment(tick) ?? false)
 			{
-				// No segment prior to tick, i.e. earliest tick added so far
-				valueInsertedInMiddle = (Count != 0);
-				_values.Insert(0, value);
-				_segmentsByTick.Add(tick, new ValueSegment(0));
+				// Tick is already contained, no need to update any Segments
+				return;
+			}
+
+			if (segment != null && tick == segment.EndTick + 1)
+			{
+				// Value tails prior segment, extend it
+				segment.TickDuration++;
 			}
 			else
 			{
-				ValueSegment closestSegment = _segmentsByTick[closestSegmentStartTick];
-				int closestSegmentEndTick = closestSegmentStartTick + closestSegment.TickDuration - 1;
-
-				int ticksSinceStartOfSegment = tick - closestSegmentStartTick;
-				int valuesIndex = closestSegment.ValuesIndex + ticksSinceStartOfSegment;
-
-				if (tick >= closestSegmentStartTick && tick <= closestSegmentEndTick)
-				{
-					// Tick is already contained, just update value
-					_values[valuesIndex] = value;
-					return;
-				}
-
-				bool tickTrailsSegment = (tick == closestSegmentEndTick + 1);
-				valuesIndex = Math.Min(valuesIndex, closestSegment.ValuesIndex + closestSegment.TickDuration);
-				_values.Insert(valuesIndex, value);
-				valueInsertedInMiddle = (Count - 1 > tick);
-				if (tickTrailsSegment)
-				{
-					// Value tails prior segment, extend it
-					_segmentsByTick[closestSegmentStartTick].TickDuration++;
-				}
-				else
-				{
-					// No segment contains this tick, create new one
-					_segmentsByTick.Add(tick, new ValueSegment(valuesIndex));
-				}
+				// No segment contains this tick, create new one
+				_segmentsByTick.Add(tick, new ValueSegment(tick, valuesIndex));
 			}
 
-			if (valueInsertedInMiddle)
+			bool wasValueInsertedInMiddle = (Count - 1 > tick);
+			if (wasValueInsertedInMiddle)
 			{
-				int closestNextSegmentTick = _segmentsByTick.Keys.FirstOrDefault(x => x > tick, -1);
-				if (tick == closestNextSegmentTick - 1)
-				{
-					// Tick prepends next segment, remove it
-					_segmentsByTick[closestSegmentStartTick].TickDuration += _segmentsByTick[closestNextSegmentTick].TickDuration;
-					_segmentsByTick.Remove(closestNextSegmentTick);
-				}
-				if (closestNextSegmentTick != -1)
-				{
-					// There are segments following the one for current tick. Since we inserted value
-					// in middle of _values, we need to update the Segment tick indices
-					foreach (int segmentStartTick in _segmentsByTick.Keys)
-					{
-						if (segmentStartTick <= tick)
-						{
-							continue;
-						}
-						_segmentsByTick[segmentStartTick].ValuesIndex++;
-					}
-				}
+				UpdateSegmentsAfterTick(tick);
 			}
 		}
 
@@ -147,62 +125,77 @@ namespace DemoTracker
 					throw new IndexOutOfRangeException($"Cannot access tick {tick}. Tick cannot be negative.");
 				}
 
-				if (_currentSegmentStartTick == -1)
+				if (_currentSegment == null)
 				{
-					return FindValueSegment(tick);
+					return UpdateSegmentBoundary(tick);
+				}
+				if (_currentSegment.IsTickInsideSegment(tick))
+				{
+					return _values[_currentSegment.GetTickValuesIndex(tick)];
 				}
 
-				// Cases where tick is outside current Segment
-				if (tick < _currentSegmentStartTick)
+				// Tick is outside current Segment
+				bool isTickBeforeFirstSegment = (tick < _currentSegment.StartTick && _prevSegmentEndTick == -1);
+				bool isTickAfterLastSegment = (tick > _currentSegment.EndTick && _nextSegmentStartTick == -1);
+				bool isTickBetweenPrevAndNextSegments = (tick > _prevSegmentEndTick && tick < _nextSegmentStartTick);
+				if (isTickBeforeFirstSegment || isTickBetweenPrevAndNextSegments || isTickAfterLastSegment)
 				{
-					if (_prevSegmentEndTick == -1 || tick > _prevSegmentEndTick)
-					{
-						return default(T);
-					}
-					// Value belongs to Segment outside current, update
-					return FindValueSegment(tick);
-				}
-				int currentSegmentEndTick = _currentSegmentStartTick + _currentSegment.TickDuration - 1;
-				if (tick > currentSegmentEndTick)
-				{
-					if (_nextSegmentStartTick == -1 || tick < _nextSegmentStartTick)
-					{
-						return default(T);
-					}
-					// Value belongs to Segment outside current, update
-					return FindValueSegment(tick);
+					return null;
 				}
 
-				int ticksSinceStartOfSegment = tick - _currentSegmentStartTick;
-				int valuesIndex = _currentSegment.ValuesIndex + ticksSinceStartOfSegment;
-				return _values[valuesIndex];
+				// Tick is outside current Boundary, update it
+				return UpdateSegmentBoundary(tick);
 			}
 		}
 
-		private T? FindValueSegment(int tick)
+		private T? UpdateSegmentBoundary(int tick)
 		{
-			_currentSegmentStartTick = _segmentsByTick.Keys.LastOrDefault(x => x <= tick, -1);
-			if (_currentSegmentStartTick == -1)
+			_currentSegment = FindSegmentBeforeTick(tick);
+			if (_currentSegment == null)
 			{
-				return default(T);
+				return null;
 			}
 
-			_currentSegment = _segmentsByTick[_currentSegmentStartTick];
-			int indexOfCurrentSegment = _segmentsByTick.IndexOfKey(_currentSegmentStartTick);
+			int indexOfCurrentSegment = _segmentsByTick.IndexOfKey(_currentSegment.StartTick);
+			_prevSegmentEndTick = -1;
+			_nextSegmentStartTick = -1;
 			if (indexOfCurrentSegment > 0)
 			{
-				int prevSegmentStartTick = _segmentsByTick.GetKeyAtIndex(indexOfCurrentSegment - 1);
-				_prevSegmentEndTick = prevSegmentStartTick + _segmentsByTick[prevSegmentStartTick].TickDuration;
+				_prevSegmentEndTick = _segmentsByTick.GetValueAtIndex(indexOfCurrentSegment - 1).EndTick;
 			}
 			if (indexOfCurrentSegment < _segmentsByTick.Count - 1)
 			{
-				_nextSegmentStartTick = _segmentsByTick.GetKeyAtIndex(indexOfCurrentSegment + 1);
-			}
-			else
-			{
-				_nextSegmentStartTick = -1;
+				_nextSegmentStartTick = _segmentsByTick.GetValueAtIndex(indexOfCurrentSegment + 1).StartTick;
 			}
 			return this[tick];
+		}
+
+		private ValueSegment? FindSegmentBeforeTick(int tick)
+		{
+			return _segmentsByTick.Values.LastOrDefault(x => x.StartTick <= tick, null);
+		}
+
+		private void UpdateSegmentsAfterTick(int tick)
+		{
+			// Combine segments if tick connects them
+			ValueSegment segment = FindSegmentBeforeTick(tick);
+			ValueSegment? segmentStartingOnNextTick = _segmentsByTick.GetValueOrDefault(tick + 1, null);
+			if (segmentStartingOnNextTick != null)
+			{
+				segment.TickDuration += segmentStartingOnNextTick.TickDuration;
+				_segmentsByTick.Remove(tick + 1);
+			}
+
+			// There are segments following the one for current tick. Since we inserted value
+			// in middle of _values, we need to update the Segment tick indices
+			foreach (ValueSegment followingSegment in _segmentsByTick.Values)
+			{
+				if (followingSegment.StartTick <= tick)
+				{
+					continue;
+				}
+				followingSegment.ValuesIndex++;
+			}
 		}
 	}
 }

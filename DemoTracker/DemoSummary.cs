@@ -1,6 +1,7 @@
 ﻿using DemoInfo;
 using DemoTracker.Structs;
 using System.IO;
+using System.Numerics;
 
 namespace DemoTracker
 {
@@ -30,7 +31,7 @@ namespace DemoTracker
 
 		public void GetZantoxPositions()
 		{
-			List<Vector?> zantoxPositions = new List<Vector?>(23935);
+			List<Vector3?> zantoxPositions = new List<Vector3?>(23935);
 			for (int tick = 0; tick < _currentTick; tick++)
 			{
 				PlayerTickSummary[] players = _playerTracker.GetTick(tick);
@@ -47,7 +48,7 @@ namespace DemoTracker
 					}
 				}
 			}
-			foreach (Vector? pos in zantoxPositions)
+			foreach (Vector3? pos in zantoxPositions)
 			{
 				Console.WriteLine(pos);
 			}

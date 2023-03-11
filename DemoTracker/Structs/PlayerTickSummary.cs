@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using Tracker;
@@ -13,7 +14,7 @@ namespace DemoTracker.Structs
 		public string Name;
 		public long SteamID;
 		public string SteamID32;
-		public Vector? Position;
+		public Vector3? Position;
 		public float? ViewDirectionX;
 		public float? ViewDirectionY;
 		public float? FlashDuration;

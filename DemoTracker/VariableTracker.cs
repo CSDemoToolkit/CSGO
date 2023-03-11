@@ -6,7 +6,7 @@ using System.Security.Cryptography;
 
 namespace Tracker
 {
-	public class VariableTracker<T>
+	public class VariableTracker<T> where T : unmanaged
 	{
 		private SortedList<int, T?> _valueByTick;
 		private T? _prevValue;
@@ -37,7 +37,7 @@ namespace Tracker
 				throw new IndexOutOfRangeException($"Cannot add tick {tick}. Tick cannot be negative.");
 			}
 			int closestUpperBoundTickKey = _valueByTick.Keys.LastOrDefault(x => x <= tick, -1);
-			if (closestUpperBoundTickKey > 0 && EqualityComparer<T>.Default.Equals(value, _valueByTick[closestUpperBoundTickKey]))
+			if (closestUpperBoundTickKey > 0 && EqualityComparer<T?>.Default.Equals(value, _valueByTick[closestUpperBoundTickKey]))
 			{
 				// Value hasn't changed, do not add
 				return;
@@ -93,7 +93,7 @@ namespace Tracker
 			if (_prevValueTick < 0)
 			{
 				// tick is before first tick in List
-				_prevValue = default(T);
+				_prevValue = null;
 				_nextValueTick = First().Key;
 			}
 			else if (_prevValueTick == Last().Key)
