@@ -9,13 +9,7 @@ namespace DemoTracker.Structs
 {
 	public struct TickSummary
 	{
-		public RoundScore roundScore;
-
-		public TickSummary()
-		{
-			roundScore = new RoundScore();
-			roundScore.TScore = 0;
-			roundScore.CTScore = 0;
-		}
+		public RoundScore? RoundScore;
+		public PlayerTickSummary[] Players;
 	}
 }

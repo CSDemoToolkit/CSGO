@@ -3,6 +3,7 @@ using CSGO.API.Faceit;
 using CSGO.API.Gamer;
 using DemoReader;
 using DemoTracker;
+using DemoTracker.Structs;
 using System.Diagnostics;
 using Tracker;
 
@@ -29,7 +30,7 @@ namespace Runner
 			{
 				DemoSummary demo = new DemoSummary(demoPath);
 				demo.Process();
-				demo.GetZantoxPositions();
+				TickSummary tick = demo.GetTickSummary(10000);
 			}
             else
             {

@@ -8,12 +8,15 @@ namespace DemoTracker
 	public class DemoSummary
 	{
 		private DemoParser _parser;
+		private GameTracker _gameTracker;
 		private PlayerTracker _playerTracker;
+
 		private int _currentTick = 0;
 
 		public DemoSummary(string path)
 		{
 			_parser = new(File.OpenRead(path));
+			_gameTracker = new GameTracker(_parser);
 			_playerTracker = new PlayerTracker(_parser);
 		}
 
@@ -29,34 +32,17 @@ namespace DemoTracker
 			Console.WriteLine(_currentTick);
 		}
 
-		public void GetZantoxPositions()
+		public TickSummary GetTickSummary(int tick)
 		{
-			List<Vector3?> zantoxPositions = new List<Vector3?>(23935);
-			for (int tick = 0; tick < _currentTick; tick++)
-			{
-				PlayerTickSummary[] players = _playerTracker.GetTick(tick);
-				foreach (PlayerTickSummary player in players)
-				{
-					if (tick == 0)
-					{
-						Console.WriteLine("GetZantoxPositions: " + player.Name);
-					}
-					if (player.Name == "Zantox")
-					{
-						zantoxPositions.Add(player.Position);
-						break;
-					}
-				}
-			}
-			foreach (Vector3? pos in zantoxPositions)
-			{
-				Console.WriteLine(pos);
-			}
+			TickSummary _tickSummary = _gameTracker.GetTick(tick);
+			_tickSummary.Players = _playerTracker.GetTick(tick);
+			return _tickSummary;
 		}
 
 		private void Parser_TickDone(object? sender, TickDoneEventArgs e)
 		{
 			_playerTracker.Process_TickDone(_currentTick);
+			_gameTracker.Process_TickDone(_currentTick);
 			_currentTick++;
 		}
 	}

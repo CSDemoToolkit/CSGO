@@ -10,5 +10,11 @@ namespace DemoTracker.Structs
 	{
 		public int TScore;
 		public int CTScore;
+
+		public RoundScore(int tScore, int ctScore)
+		{
+			this.TScore = tScore;
+			this.CTScore = ctScore;
+		}
 	}
 }

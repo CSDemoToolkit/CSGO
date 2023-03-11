@@ -10,7 +10,7 @@ using Tracker;
 
 namespace DemoTracker
 {
-	public class PlayerTracker
+	internal class PlayerTracker
 	{
 		private DemoParser _demoParser;
 
@@ -20,13 +20,13 @@ namespace DemoTracker
 			public long SteamID { get; private set; }
 			public string SteamID32 { get; private set; }
 			private ContinuousVariableTracker<Vector3> Position;
-			private ContinuousVariableTracker<float> ViewDirectionX;
-			private ContinuousVariableTracker<float> ViewDirectionY;
+			private ContinuousVariableTracker<Vector2> ViewDirection;
 			private ContinuousVariableTracker<float> FlashDuration;
 			private VariableTracker<int> HP;
 			private VariableTracker<int> Armor;
 			private VariableTracker<int> Money;
 			private VariableTracker<bool> IsDucking;
+			private VariableTracker<Team> Team;
 
 			private PlayerTickSummary _summary;
 
@@ -36,13 +36,13 @@ namespace DemoTracker
 				SteamID = steamId;
 				SteamID32 = steamId32;
 				Position = new ContinuousVariableTracker<Vector3>();
-				ViewDirectionX = new ContinuousVariableTracker<float>();
-				ViewDirectionY = new ContinuousVariableTracker<float>();
+				ViewDirection = new ContinuousVariableTracker<Vector2>();
 				FlashDuration = new ContinuousVariableTracker<float>();
 				HP = new VariableTracker<int>();
 				Armor = new VariableTracker<int>();
 				Money = new VariableTracker<int>();
 				IsDucking = new VariableTracker<bool>();
+				Team = new VariableTracker<Team>();
 
 				_summary = new PlayerTickSummary();
 				_summary.Name = Name;
@@ -52,38 +52,47 @@ namespace DemoTracker
 
 			public void AddTick(int tick, DemoInfo.Player playerInfo)
 			{
-				Position.Add(tick, playerInfo.Position.ToNumericVector());
-				ViewDirectionX.Add(tick, playerInfo.ViewDirectionX);
-				ViewDirectionY.Add(tick, playerInfo.ViewDirectionY);
-				FlashDuration.Add(tick, playerInfo.FlashDuration);
+				if (playerInfo.IsAlive)
+				{
+					Position.Add(tick, playerInfo.Position.ToNumericVector());
+					ViewDirection.Add(tick, new Vector2(playerInfo.ViewDirectionX, playerInfo.ViewDirectionY));
+					FlashDuration.Add(tick, playerInfo.FlashDuration);
+				}
+				else
+				{
+					Position.Add(tick, null);
+					ViewDirection.Add(tick, null);
+					FlashDuration.Add(tick, null);
+				}
 				HP.Add(tick, playerInfo.HP);
 				Armor.Add(tick, playerInfo.Armor);
 				Money.Add(tick, playerInfo.Money);
 				IsDucking.Add(tick, playerInfo.IsDucking);
+				Team.Add(tick, playerInfo.Team);
 			}
 
 			public void AddEmptyTick(int tick)
 			{
 				Position.Add(tick, null);
-				ViewDirectionX.Add(tick, null);
-				ViewDirectionY.Add(tick, null);
+				ViewDirection.Add(tick, null);
 				FlashDuration.Add(tick, null);
 				HP.Add(tick, null);
 				Armor.Add(tick, null);
 				Money.Add(tick, null);
 				IsDucking.Add(tick, null);
+				Team.Add(tick, null);
 			}
 
 			public PlayerTickSummary GetTick(int tick)
 			{
 				_summary.Position = Position[tick];
-				_summary.ViewDirectionX = ViewDirectionX[tick];
-				_summary.ViewDirectionY = ViewDirectionY[tick];
+				_summary.ViewDirection = ViewDirection[tick];
 				_summary.FlashDuration = FlashDuration[tick];
 				_summary.HP = HP[tick];
 				_summary.Armor = Armor[tick];
 				_summary.Money = Money[tick];
 				_summary.IsDucking = IsDucking[tick];
+				_summary.Team = Team[tick];
 				return _summary;
 			}
 		}
@@ -99,9 +108,9 @@ namespace DemoTracker
 		public PlayerTickSummary[] GetTick(int tick)
 		{
 			PlayerTickSummary[] array = new PlayerTickSummary[_playersBySteamId.Count];
-			foreach (Player player in _playersBySteamId.Values)
+			for (int playerIndex = 0; playerIndex < _playersBySteamId.Count; playerIndex++)
 			{
-				array.Append(player.GetTick(tick));
+				array[playerIndex] = _playersBySteamId.Values.ElementAt(playerIndex).GetTick(tick);
 			}
 			return array;
 		}

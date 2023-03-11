@@ -43,7 +43,7 @@ namespace DemoTracker.Tests
 			Assert.AreEqual(3, tracker.Count);
 
 			// Player not joined yet
-			Assert.AreEqual(default(Team), tracker[tickPlayerJoined - 100]);
+			Assert.AreEqual(null, tracker[tickPlayerJoined - 100]);
 
 			// Player is now Spectator
 			Assert.AreEqual(Team.Spectate, tracker[tickPlayerJoined]);

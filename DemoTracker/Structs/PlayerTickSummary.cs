@@ -15,12 +15,12 @@ namespace DemoTracker.Structs
 		public long SteamID;
 		public string SteamID32;
 		public Vector3? Position;
-		public float? ViewDirectionX;
-		public float? ViewDirectionY;
+		public Vector2? ViewDirection;
 		public float? FlashDuration;
 		public int? HP;
 		public int? Armor;
 		public int? Money;
 		public bool? IsDucking;
+		public Team? Team;
 	}
 }

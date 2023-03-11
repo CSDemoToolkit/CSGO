@@ -118,7 +118,7 @@ namespace DemoTracker
 			{
 				if (Count == 0)
 				{
-					throw new IndexOutOfRangeException($"Cannot access tick {tick}. Buffer is empty");
+					return null;
 				}
 				if (tick < 0)
 				{
