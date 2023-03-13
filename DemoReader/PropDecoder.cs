@@ -1,73 +1,71 @@
 ﻿using System;
+using System.Numerics;
 using System.Text;
-using DemoInfo.DT;
 
-namespace DemoInfo.DP.Handler
+namespace DemoReader
 {
     internal static class PropDecoder
     {
-        public static object DecodeProp(FlattenedPropEntry prop, IBitStream stream)
+        public static object DecodeProp(in SendProperty property, ref SpanBitStream bitStream, in Span<SendProperty> properties)
         {
-            var sendProp = prop.Prop;
-            switch (sendProp.Type)
+            switch (property.type)
             {
                 case SendPropertyType.Int:
-                    return DecodeInt(sendProp, stream);
+                    return DecodeInt(property, ref bitStream);
                 case SendPropertyType.Int64:
-                    return DecodeInt64(sendProp, stream);
+                    return DecodeInt64(property, ref bitStream);
                 case SendPropertyType.Float:
-                    return DecodeFloat(sendProp, stream);
+                    return DecodeFloat(property, ref bitStream);
                 case SendPropertyType.Vector:
-                    return DecodeVector(sendProp, stream);
+                    return DecodeVector(property, ref bitStream);
                 case SendPropertyType.Array:
-                    var test = DecodeArray(prop, stream);
-                    return test;
+                    return DecodeArray(property, ref bitStream, properties);
                 case SendPropertyType.String:
-                    return DecodeString(sendProp, stream);
+                    return DecodeString(property, ref bitStream);
                 case SendPropertyType.VectorXY:
-                    return DecodeVectorXY(sendProp, stream);
+                    return DecodeVectorXY(property, ref bitStream);
                 default:
                     throw new NotImplementedException("Could not read property. Abort! ABORT!");
             }
         }
 
-        public static int DecodeInt(SendTableProperty prop, IBitStream reader)
-        {
-            if (prop.Flags.HasFlagFast(SendPropertyFlags.VarInt))
-            {
-				if (prop.Flags.HasFlagFast(SendPropertyFlags.Unsigned))
-                {
-                    return (int)reader.ReadVarInt();
-                }
-                else
-                {
-                    return (int)reader.ReadSignedVarInt();
-                }
-            }
-            else
-            {
-                if (prop.Flags.HasFlagFast(SendPropertyFlags.Unsigned))
-                {
-                    return (int)reader.ReadInt(prop.NumberOfBits);
-                }
-                else
-                {
-                    return reader.ReadSignedInt(prop.NumberOfBits);
-                }
-            }
-        }
+        public static int DecodeInt(in SendProperty prop, ref SpanBitStream bitStream)
+		{
+			if (prop.flags.HasFlag(SendPropertyFlags.VarInt))
+			{
+				if (prop.flags.HasFlag(SendPropertyFlags.Unsigned))
+				{
+					return (int)bitStream.ReadUnsignedVarInt();
+				}
+				else
+				{
+					return bitStream.ReadSignedVarInt();
+				}
+			}
+			else
+			{
+				if (prop.flags.HasFlag(SendPropertyFlags.Unsigned))
+				{
+					return (int)bitStream.ReadUInt(prop.numBits);
+				}
+				else
+				{
+					return bitStream.ReadInt(prop.numBits);
+				}
+			}
+		}
 
-        public static long DecodeInt64(SendTableProperty prop, IBitStream reader)
+		public static long DecodeInt64(in SendProperty prop, ref SpanBitStream bitStream)
         {
-            if (prop.Flags.HasFlagFast(SendPropertyFlags.VarInt))
+            if (prop.flags.HasFlag(SendPropertyFlags.VarInt))
             {
-                if (prop.Flags.HasFlagFast(SendPropertyFlags.Unsigned))
+                if (prop.flags.HasFlag(SendPropertyFlags.Unsigned))
                 {
-                    return reader.ReadVarInt();
+                    return bitStream.ReadUnsignedVarInt();
                 }
                 else
                 {
-                    return reader.ReadSignedVarInt();
+                    return bitStream.ReadSignedVarInt();
                 }
             }
             else
@@ -76,16 +74,16 @@ namespace DemoInfo.DP.Handler
                 uint low = 0;
                 uint high = 0;
 
-                if (prop.Flags.HasFlag(SendPropertyFlags.Unsigned))
+                if (prop.flags.HasFlag(SendPropertyFlags.Unsigned))
                 {
-                    low = reader.ReadInt(32);
-                    high = reader.ReadInt(prop.NumberOfBits - 32);
+                    low = bitStream.ReadUInt(32);
+                    high = bitStream.ReadUInt(prop.numBits - 32);
                 }
                 else
                 {
-                    isNegative = reader.ReadBit();
-                    low = reader.ReadInt(32);
-                    high = reader.ReadInt(prop.NumberOfBits - 32 - 1);
+                    isNegative = bitStream.ReadBit();
+                    low = bitStream.ReadUInt(32);
+                    high = bitStream.ReadUInt(prop.numBits - 32 - 1);
                 }
 
                 long result = ((long)high << 32) | low;
@@ -99,12 +97,12 @@ namespace DemoInfo.DP.Handler
             }
         }
 
-        public static float DecodeFloat(SendTableProperty prop, IBitStream reader)
+        public static float DecodeFloat(in SendProperty prop, ref SpanBitStream bitStream)
         {
             float fVal = 0.0f;
             ulong dwInterp;
 
-            if (DecodeSpecialFloat(prop, reader, out fVal))
+            if (TryDecodeSpecialFloat(prop, ref bitStream, out fVal))
             {
                 return fVal;
             }
@@ -112,31 +110,31 @@ namespace DemoInfo.DP.Handler
 
             //Encoding: The range between lowVal and highVal is splitted into the same steps.
             //Read an int, fit it into the range. 
-            dwInterp = reader.ReadInt(prop.NumberOfBits);
-            fVal = (float)dwInterp / ((1 << prop.NumberOfBits) - 1);
-            fVal = prop.LowValue + (prop.HighValue - prop.LowValue) * fVal;
+            dwInterp = bitStream.ReadUInt(prop.numBits);
+            fVal = (float)dwInterp / ((1 << prop.numBits) - 1);
+            fVal = prop.lowValue + (prop.highValue - prop.lowValue) * fVal;
 
             return fVal;
         }
 
-        public static Vector DecodeVector(SendTableProperty prop, IBitStream reader)
+        public static Vector3 DecodeVector(in SendProperty prop, ref SpanBitStream bitStream)
         {
-            if (prop.Flags.HasFlagFast(SendPropertyFlags.Normal))
+            if (prop.flags.HasFlag(SendPropertyFlags.Normal))
             {
             }
 
-            Vector v = new Vector();
+			Vector3 v = new Vector3();
 
-            v.X = DecodeFloat(prop, reader);
-            v.Y = DecodeFloat(prop, reader);
+            v.X = DecodeFloat(prop, ref bitStream);
+            v.Y = DecodeFloat(prop, ref bitStream);
 
-            if (!prop.Flags.HasFlagFast(SendPropertyFlags.Normal))
+            if (!prop.flags.HasFlag(SendPropertyFlags.Normal))
             {
-                v.Z = DecodeFloat(prop, reader);
+                v.Z = DecodeFloat(prop, ref bitStream);
             }
             else
             {
-                bool isNegative = reader.ReadBit();
+                bool isNegative = bitStream.ReadBit();
 
                 //v0v0v1v1 in original instead of margin. 
                 float absolute = v.X * v.X + v.Y * v.Y;
@@ -158,9 +156,9 @@ namespace DemoInfo.DP.Handler
             return v;
         }
 
-        public static object[] DecodeArray(FlattenedPropEntry flattenedProp, IBitStream reader)
+        public static object[] DecodeArray(in SendProperty prop, ref SpanBitStream bitStream, in Span<SendProperty> properties)
         {
-            int numElements = flattenedProp.Prop.NumberOfElements;
+            int numElements = prop.numElements;
             int maxElements = numElements;
 
             int numBits = 1;
@@ -170,80 +168,83 @@ namespace DemoInfo.DP.Handler
                 numBits++;
             }
 
-            int nElements = (int)reader.ReadInt(numBits);
+            int nElements = (int)bitStream.ReadUInt(numBits);
 
             object[] result = new object[nElements];
 
-            FlattenedPropEntry temp = new FlattenedPropEntry("", flattenedProp.ArrayElementProp, null);
+			ref SendProperty temp = ref properties[prop.arrayElementProp];
             for (int i = 0; i < nElements; i++)
             {
-                result[i] = DecodeProp(temp, reader);
+                result[i] = DecodeProp(temp, ref bitStream, properties);
             }
 
             return result;
         }
 
-        public static string DecodeString(SendTableProperty prop, IBitStream reader)
+        public static string DecodeString(in SendProperty prop, ref SpanBitStream bitStream)
         {
-            return Encoding.Default.GetString(reader.ReadBytes((int)reader.ReadInt(9)));
+			Span<byte> buff = stackalloc byte[1024];
+			bitStream.ReadBytes((int)bitStream.ReadUInt(9), buff);
+
+			return Encoding.Default.GetString(buff);
         }
 
-        public static Vector DecodeVectorXY(SendTableProperty prop, IBitStream reader)
+        public static Vector2 DecodeVectorXY(in SendProperty prop, ref SpanBitStream bitStream)
         {
-            Vector v = new Vector();
-            v.X = DecodeFloat(prop, reader);
-            v.Y = DecodeFloat(prop, reader);
+			Vector2 v = new Vector2();
+            v.X = DecodeFloat(prop, ref bitStream);
+            v.Y = DecodeFloat(prop, ref bitStream);
 
             return v;
         }
 
         #region Float-Stuff
 
-        private static bool DecodeSpecialFloat(SendTableProperty prop, IBitStream reader, out float result)
+        private static bool TryDecodeSpecialFloat(in SendProperty prop, ref SpanBitStream bitStream, out float result)
         {
-            if (prop.Flags.HasFlagFast(SendPropertyFlags.Coord))
+            if (prop.flags.HasFlag(SendPropertyFlags.Coord))
             {
-                result = ReadBitCoord(reader);
+                result = ReadBitCoord(ref bitStream);
                 return true;
             }
-            else if (prop.Flags.HasFlagFast(SendPropertyFlags.CoordMp))
+            else if (prop.flags.HasFlag(SendPropertyFlags.CoordMp))
             {
-                result = ReadBitCoordMP(reader, false, false);
+                result = ReadBitCoordMP(ref bitStream, false, false);
                 return true;
             }
-            else if (prop.Flags.HasFlagFast(SendPropertyFlags.CoordMpLowPrecision))
+            else if (prop.flags.HasFlag(SendPropertyFlags.CoordMpLowPrecision))
             {
-                result = ReadBitCoordMP(reader, false, true);
+                result = ReadBitCoordMP(ref bitStream, false, true);
                 return true;
             }
-            else if (prop.Flags.HasFlagFast(SendPropertyFlags.CoordMpIntegral))
+            else if (prop.flags.HasFlag(SendPropertyFlags.CoordMpIntegral))
             {
-                result = ReadBitCoordMP(reader, true, false);
+                result = ReadBitCoordMP(ref bitStream, true, false);
                 return true;
             }
-            else if (prop.Flags.HasFlagFast(SendPropertyFlags.NoScale))
+            else if (prop.flags.HasFlag(SendPropertyFlags.NoScale))
             {
-                result = reader.ReadFloat();
+                result = bitStream.ReadFloat(32);
                 return true;
             }
-            else if (prop.Flags.HasFlagFast(SendPropertyFlags.Normal))
+            else if (prop.flags.HasFlag(SendPropertyFlags.Normal))
             {
-                result = ReadBitNormal(reader);
+                result = ReadBitNormal(ref bitStream);
                 return true;
             }
-            else if (prop.Flags.HasFlagFast(SendPropertyFlags.CellCoord))
+            else if (prop.flags.HasFlag(SendPropertyFlags.CellCoord))
             {
-                result = ReadBitCellCoord(reader, prop.NumberOfBits, false, false);
+                result = ReadBitCellCoord(ref bitStream, prop.numBits, false, false);
                 return true;
             }
-            else if (prop.Flags.HasFlagFast(SendPropertyFlags.CellCoordLowPrecision))
+            else if (prop.flags.HasFlag(SendPropertyFlags.CellCoordLowPrecision))
             {
-                result = ReadBitCellCoord(reader, prop.NumberOfBits, true, false);
+                result = ReadBitCellCoord(ref bitStream, prop.numBits, true, false);
                 return true;
             }
-            else if (prop.Flags.HasFlagFast(SendPropertyFlags.CellCoordIntegral))
+            else if (prop.flags.HasFlag(SendPropertyFlags.CellCoordIntegral))
             {
-                result = ReadBitCellCoord(reader, prop.NumberOfBits, false, true);
+                result = ReadBitCellCoord(ref bitStream, prop.numBits, false, true);
                 return true;
             }
 
@@ -260,7 +261,7 @@ namespace DemoInfo.DP.Handler
         private static readonly float COORD_DENOMINATOR_LOWPRECISION = 1 << COORD_FRACTIONAL_BITS_MP_LOWPRECISION;
         private static readonly float COORD_RESOLUTION_LOWPRECISION = 1.0f / COORD_DENOMINATOR_LOWPRECISION;
 
-        private static float ReadBitCoord(IBitStream reader)
+        private static float ReadBitCoord(ref SpanBitStream bitStream)
         {
             int intVal, fractVal;
             float value = 0;
@@ -268,26 +269,26 @@ namespace DemoInfo.DP.Handler
             bool isNegative = false;
 
             // Read the required integer and fraction flags
-            intVal = (int)reader.ReadInt(1);
-            fractVal = (int)reader.ReadInt(1);
+            intVal = (int)bitStream.ReadUInt(1);
+            fractVal = (int)bitStream.ReadUInt(1);
 
             // If we got either parse them, otherwise it's a zero.
             if ((intVal | fractVal) != 0)
             {
                 // Read the sign bit
-                isNegative = reader.ReadBit();
+                isNegative = bitStream.ReadBit();
 
                 // If there's an integer, read it in
                 if (intVal == 1)
                 {
                     // Adjust the integers from [0..MAX_COORD_VALUE-1] to [1..MAX_COORD_VALUE]
-                    intVal = (int)reader.ReadInt(14) + 1; //14 --> Coord int bits
+                    intVal = (int)bitStream.ReadUInt(14) + 1; //14 --> Coord int bits
                 }
 
                 //If there's a fraction, read it in
                 if (fractVal == 1)
                 {
-                    fractVal = (int)reader.ReadInt(COORD_FRACTIONAL_BITS);
+                    fractVal = (int)bitStream.ReadUInt(COORD_FRACTIONAL_BITS);
                 }
 
                 value = intVal + (float)fractVal * COORD_RESOLUTION;
@@ -301,44 +302,44 @@ namespace DemoInfo.DP.Handler
             return value;
         }
 
-        private static float ReadBitCoordMP(IBitStream reader, bool isIntegral, bool isLowPrecision)
+        private static float ReadBitCoordMP(ref SpanBitStream bitStream, bool isIntegral, bool isLowPrecision)
         {
             int intval = 0, fractval = 0;
             float value = 0.0f;
             bool isNegative = false;
 
-            bool inBounds = reader.ReadBit();
+            bool inBounds = bitStream.ReadBit();
 
             if (isIntegral)
             {
                 // Read the required integer and fraction flags
-                intval = reader.ReadBit() ? 1 : 0;
+                intval = bitStream.ReadBit() ? 1 : 0;
 
                 // If we got either parse them, otherwise it's a zero.
                 if (intval == 1)
                 {
                     // Read the sign bit
-                    isNegative = reader.ReadBit();
+                    isNegative = bitStream.ReadBit();
 
                     // If there's an integer, read it in
                     // Adjust the integers from [0..MAX_COORD_VALUE-1] to [1..MAX_COORD_VALUE]
                     if (inBounds)
                     {
-                        value = (float)(reader.ReadInt(11) + 1);
+                        value = (float)(bitStream.ReadUInt(11) + 1);
                     }
                     else
                     {
-                        value = (float)(reader.ReadInt(14) + 1);
+                        value = (float)(bitStream.ReadUInt(14) + 1);
                     }
                 }
             }
             else
             {
                 // Read the required integer and fraction flags
-                intval = reader.ReadBit() ? 1 : 0;
+                intval = bitStream.ReadBit() ? 1 : 0;
 
                 // Read the sign bit
-                isNegative = reader.ReadBit();
+                isNegative = bitStream.ReadBit();
 
                 // If we got either parse them, otherwise it's a zero.
                 if (intval == 1)
@@ -347,16 +348,16 @@ namespace DemoInfo.DP.Handler
                     // Adjust the integers from [0..MAX_COORD_VALUE-1] to [1..MAX_COORD_VALUE]
                     if (inBounds)
                     {
-                        value = (float)(reader.ReadInt(11) + 1);
+                        value = (float)(bitStream.ReadInt(11) + 1);
                     }
                     else
                     {
-                        value = (float)(reader.ReadInt(14) + 1);
+                        value = (float)(bitStream.ReadInt(14) + 1);
                     }
                 }
 
                 // If there's a fraction, read it in
-                fractval = (int)reader.ReadInt(isLowPrecision ? 3 : 5);
+                fractval = (int)bitStream.ReadInt(isLowPrecision ? 3 : 5);
 
                 // Calculate the correct floating point value
                 value = intval + (float)fractval * (isLowPrecision ? COORD_RESOLUTION_LOWPRECISION : COORD_RESOLUTION);
@@ -370,19 +371,19 @@ namespace DemoInfo.DP.Handler
             return value;
         }
 
-        private static float ReadBitCellCoord(IBitStream reader, int bits, bool lowPrecision, bool integral)
+        private static float ReadBitCellCoord(ref SpanBitStream bitStream, int bits, bool lowPrecision, bool integral)
         {
             int intval = 0, fractval = 0;
             float value = 0.0f;
 
             if (integral)
             {
-                value = (float)reader.ReadInt(bits);
+                value = (float)bitStream.ReadUInt(bits);
             }
             else
             {
-                intval = (int)reader.ReadInt(bits);
-                fractval = (int)reader.ReadInt(lowPrecision ? COORD_FRACTIONAL_BITS_MP_LOWPRECISION : COORD_FRACTIONAL_BITS);
+                intval = (int)bitStream.ReadUInt(bits);
+                fractval = (int)bitStream.ReadUInt(lowPrecision ? COORD_FRACTIONAL_BITS_MP_LOWPRECISION : COORD_FRACTIONAL_BITS);
 
 
                 value = intval + (float)fractval * (lowPrecision ? COORD_RESOLUTION_LOWPRECISION : COORD_RESOLUTION);
@@ -395,11 +396,11 @@ namespace DemoInfo.DP.Handler
         private static readonly int NORMAL_DENOMINATOR = (1 << NORMAL_FRACTIONAL_BITS) - 1;
         private static readonly float NORMAL_RESOLUTION = 1.0f / NORMAL_DENOMINATOR;
 
-        private static float ReadBitNormal(IBitStream reader)
+        private static float ReadBitNormal(ref SpanBitStream bitStream)
         {
-            bool isNegative = reader.ReadBit();
+            bool isNegative = bitStream.ReadBit();
 
-            uint fractVal = reader.ReadInt(NORMAL_FRACTIONAL_BITS);
+            uint fractVal = bitStream.ReadUInt(NORMAL_FRACTIONAL_BITS);
 
             float value = (float)fractVal * NORMAL_RESOLUTION;
 

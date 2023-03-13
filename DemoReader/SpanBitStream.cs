@@ -5,8 +5,8 @@ namespace DemoReader
 {
     public ref struct SpanBitStream
     {
-        Span<byte> buff;
-        int idx = 0;
+        public Span<byte> buff;
+        public int idx = 0;
 
         public SpanBitStream(Span<byte> buff)
         {
@@ -92,7 +92,23 @@ namespace DemoReader
 			return BitConverter.ToUInt64(buff);
 		}
 
-        public string ReadString(int length)
+		public float ReadFloat(int bits)
+		{
+			Span<byte> buff = stackalloc byte[4];
+			ReadBytes(bits, buff);
+
+			return BitConverter.ToSingle(buff);
+		}
+
+		public double ReadDouble(int bits)
+		{
+			Span<byte> buff = stackalloc byte[8];
+			ReadBytes(bits, buff);
+
+			return BitConverter.ToDouble(buff);
+		}
+
+		public string ReadString(int length)
         {
 			Span<byte> buff = stackalloc byte[length];
 			ReadBytes(buff.Length * 8, buff);

@@ -48,16 +48,18 @@ namespace DemoInfo.DP
             int index = -1;
             var entries = new List<PropertyEntry>();
 
-            //Console.WriteLine(" Reading field index");
+            Console.WriteLine("Reading field index");
             //No read them. 
             while ((index = ReadFieldIndex(reader, index, newWay)) != -1)
             {
-                //Console.WriteLine($"        {index}");
+                Console.WriteLine($"        {index} - {newWay} - {Props[index].Entry.Prop.Name}");
                 entries.Add(Props[index]);
             }
 
-            //Now read the updated props
-            foreach (var prop in entries)
+			Console.WriteLine($"	{entries.Count}");
+
+			//Now read the updated props
+			foreach (var prop in entries)
             {
                 prop.Decode(reader, this);
             }
@@ -65,22 +67,25 @@ namespace DemoInfo.DP
 
         private int ReadFieldIndex(IBitStream reader, int lastIndex, bool bNewWay)
         {
-            if (bNewWay)
+			if (bNewWay)
             {
                 if (reader.ReadBit())
                 {
-                    return lastIndex + 1;
+					//Console.WriteLine("		1");
+					return lastIndex + 1;
                 }
             }
 
             int ret = 0;
             if (bNewWay && reader.ReadBit())
             {
-                ret = (int)reader.ReadInt(3); // read 3 bits
-            }
+				ret = (int)reader.ReadInt(3); // read 3 bits
+				//Console.WriteLine($"		2 - {ret}");
+			}
             else
             {
-                ret = (int)reader.ReadInt(7); // read 7 bits
+				//Console.WriteLine("		3");
+				ret = (int)reader.ReadInt(7); // read 7 bits
                 switch (ret & (32 | 64))
                 {
                     case 32:
@@ -140,7 +145,7 @@ namespace DemoInfo.DP
             {
                 case SendPropertyType.Int:
                 {
-                    var val = PropDecoder.DecodeInt(Entry.Prop, stream);
+					var val = PropDecoder.DecodeInt(Entry.Prop, stream);
                     if (IntRecived != null)
                     {
                         IntRecived(this, new PropertyUpdateEventArgs<int>(val, e, this));
@@ -168,7 +173,7 @@ namespace DemoInfo.DP
                 case SendPropertyType.Vector:
                 {
                     var val = PropDecoder.DecodeVector(Entry.Prop, stream);
-                    if (VectorRecived != null)
+					if (VectorRecived != null)
                     {
                         VectorRecived(this, new PropertyUpdateEventArgs<Vector>(val, e, this));
                     }

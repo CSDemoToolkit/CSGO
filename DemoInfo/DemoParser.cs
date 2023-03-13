@@ -727,7 +727,7 @@ namespace DemoInfo
                     break;
                 case DemoCommand.DataTables:
                     BitStream.BeginChunk(BitStream.ReadSignedInt(32) * 8);
-                    Console.WriteLine("DataTables");
+                    //Console.WriteLine("DataTables");
                     SendTableParser.ParsePacket(BitStream);
                     BitStream.EndChunk();
 

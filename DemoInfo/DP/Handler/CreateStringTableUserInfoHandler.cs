@@ -114,7 +114,7 @@ namespace DemoInfo.DP.Handler
                     int classid = int.Parse(entry); //wtf volvo?
 
                     parser.instanceBaseline[classid] = userdata;
-                }
+				}
                 else if (table.Name == "modelprecache")
                 {
                     parser.modelprecache[entryIndex] = entry;

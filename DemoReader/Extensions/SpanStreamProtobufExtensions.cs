@@ -4,7 +4,8 @@ using System.Text;
 
 namespace DemoReader
 {
-    static class SpanStreamProtobufExtensions
+
+	static class SpanStreamProtobufExtensions
     {
         static int ReadProtobufVarIntStub(this ref SpanStream<byte> reader)
         {

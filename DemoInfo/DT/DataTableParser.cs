@@ -70,11 +70,18 @@ namespace DemoInfo.DT
                 FlattenDataTable(i);
             }
 
-            int idx = 0;
-            Console.WriteLine($"{ServerClasses[idx].Name} - {DataTables[ServerClasses[idx].DataTableID].Name}");
-			foreach (var prop in ServerClasses[idx].FlattenedProps)
+			Console.WriteLine();
+
+			for (int i = 0; i < DataTables[ServerClasses[40].DataTableID].Properties.Count; i++)
 			{
-				Console.WriteLine($"    Type: {prop.Prop.Type}:{prop.Prop.Name} - {prop.Prop.Flags.HasFlag(SendPropertyFlags.Exclude)} - {prop.Prop.DataTableName}");
+				var prop = DataTables[ServerClasses[40].DataTableID].Properties[i];
+				//Console.WriteLine($"{i}: {prop.Name}");
+			}
+
+			for (int a = 0; a < ServerClasses[40].FlattenedProps.Count; a++)
+			{
+				var prop = ServerClasses[40].FlattenedProps[a].Prop;
+				Console.WriteLine($"{a}: {prop.Name}");
 			}
 		}
 
@@ -101,6 +108,7 @@ namespace DemoInfo.DT
             priorities.AddRange(flattenedProps.Select(a => a.Prop.Priority).Distinct());
             priorities.Sort();
 
+			/*
             int start = 0;
             for (int priorityIndex = 0; priorityIndex < priorities.Count; priorityIndex++)
             {
@@ -114,9 +122,9 @@ namespace DemoInfo.DT
                     {
                         SendTableProperty prop = flattenedProps[currentProp].Prop;
 
-                        if (prop.Priority == priority || priority == 64 && prop.Flags.HasFlagFast(SendPropertyFlags.ChangesOften))
+                        if (prop.Priority == priority || (priority == 64 && prop.Flags.HasFlagFast(SendPropertyFlags.ChangesOften)))
                         {
-                            if (start != currentProp)
+							if (start != currentProp)
                             {
                                 FlattenedPropEntry temp = flattenedProps[start];
                                 flattenedProps[start] = flattenedProps[currentProp];
@@ -136,6 +144,7 @@ namespace DemoInfo.DT
                     }
                 }
             }
+			*/
         }
 
         private void GatherExcludesAndBaseclasses(SendTable sendTable, bool collectBaseClasses)
@@ -155,7 +164,7 @@ namespace DemoInfo.DT
                 }
                 else
                 {
-                    GatherExcludesAndBaseclasses(GetTableByName(prop.DataTableName), false);
+					GatherExcludesAndBaseclasses(GetTableByName(prop.DataTableName), false);
                 }
             }
         }
@@ -172,9 +181,16 @@ namespace DemoInfo.DT
 
         private void GatherProps_IterateProps(SendTable table, int ServerClassIndex, List<FlattenedPropEntry> flattenedProps, string prefix)
         {
+            //Console.WriteLine(table.Name);
             for (int i = 0; i < table.Properties.Count; i++)
             {
-                SendTableProperty property = table.Properties[i];
+
+				SendTableProperty property = table.Properties[i];
+				//Console.WriteLine($"    Type: {property.Type}:{property.Name} - {property.Flags.HasFlag(SendPropertyFlags.Exclude)} - {property.DataTableName}");
+				if (IsPropExcluded(table, property) && (!property.Flags.HasFlagFast(SendPropertyFlags.InsideArray)) && (!property.Flags.HasFlagFast(SendPropertyFlags.Exclude)))
+				{
+					//Console.WriteLine($"Excluded: {property.Name}, {ServerClassIndex}");
+				}
 
                 if (property.Flags.HasFlagFast(SendPropertyFlags.InsideArray) || property.Flags.HasFlagFast(SendPropertyFlags.Exclude) ||
                     IsPropExcluded(table, property))

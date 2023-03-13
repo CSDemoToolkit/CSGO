@@ -2,7 +2,7 @@
 {
     public struct SendTable
     {
-        public List<SendPropperty> properties;
+        public List<SendProperty> properties;
         public string netTableName;
         public bool isEnd;
         public bool needsDecoder;
@@ -10,7 +10,7 @@
         public static SendTable Parse(SpanStream<byte> stream)
         {
             var sendTable = new SendTable();
-            sendTable.properties = new List<SendPropperty>();
+            sendTable.properties = new List<SendProperty>();
 
             while (!stream.IsEnd)
             {
@@ -27,7 +27,7 @@
                     else if (fieldnum == 4)
                     {
                         int size = stream.ReadProtobufVarInt();
-                        sendTable.properties.Add(SendPropperty.Parse(stream.Slice(size)));
+                        sendTable.properties.Add(SendProperty.Parse(stream.Slice(size)));
                     }
                     else
                     {

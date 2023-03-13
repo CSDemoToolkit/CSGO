@@ -1,6 +1,6 @@
 ﻿namespace DemoReader
 {
-    public struct SendPropperty
+    public struct SendProperty
     {
         public SendPropertyType type;
         public string varName;
@@ -12,9 +12,11 @@
         public float highValue;
         public int numBits;
 
-        public static SendPropperty Parse(SpanStream<byte> stream)
+		public int arrayElementProp;
+
+        public static SendProperty Parse(SpanStream<byte> stream)
         {
-            var prop = new SendPropperty();
+            var prop = new SendProperty();
 
             while (!stream.IsEnd)
             {
@@ -27,7 +29,7 @@
                     if (fieldnum == 2)
                     {
                         prop.varName = stream.ReadProtobufString();
-                    }
+					}
                     else if (fieldnum == 5)
                     {
                         prop.dtName = stream.ReadProtobufString();

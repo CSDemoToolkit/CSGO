@@ -17,9 +17,9 @@ namespace Runner
             DemoReader.DemoReader demoReader = new();
             Stopwatch sw = Stopwatch.StartNew();
 
-            int useDemoInfo = 1;
+            int useDemoInfo = 0;
 
-            if (useDemoInfo == 1)
+            if (useDemoInfo == 0)
             {
                 demo.Analyze("Demos/demo1.dem");
             }

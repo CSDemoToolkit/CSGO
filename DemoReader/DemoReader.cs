@@ -17,6 +17,7 @@ namespace DemoReader
 		public string[] modelPrecaches = new string[847];
 
 		public PlayerInfo[] players = new PlayerInfo[64];
+		public Entity[] entities = new Entity[512];
 
 		public int ServerClassesBits;
 
@@ -24,7 +25,6 @@ namespace DemoReader
 		{
 			using var file = MemoryMappedFile.CreateFromFile(path);
 			using var stream = file.CreateViewStream();
-			//using var stream = File.OpenRead(path);
 
 			ReadHeader(stream);
 
@@ -85,17 +85,6 @@ namespace DemoReader
 			ServerClasses = GetServerClasses(ref spanStream, DataTables);
 			ServerClassesBits = BitOperations.Log2(BitOperations.RoundUpToPowerOf2((uint)ServerClasses.Length));
 
-			foreach (var item in ServerClasses)
-			{
-				Console.WriteLine($"{item.name} - {DataTables[item.dataTableID].netTableName}");
-				foreach (var prop in item.properties)
-				{
-					Console.WriteLine($"    Type: {prop.type}:{prop.varName} - {prop.flags.HasFlag(SendPropertyFlags.Exclude)} - {prop.priority}");
-				}
-
-                Console.WriteLine("done");
-            }
-
 			return true;
 		}
 
@@ -118,7 +107,7 @@ namespace DemoReader
 				switch (cmd)
 				{
 					case SVCMessages.svc_PacketEntities:
-						PacketEntities.Parse(cmdStream, ServerClasses, ServerClassesBits);
+						PacketEntities.Parse(cmdStream, ServerClasses, entities, instanceBaselines, ServerClassesBits);
 						break;
 					case SVCMessages.svc_CreateStringTable:
 						StringTable table = StringTable.Parse(ref cmdStream);
@@ -208,6 +197,8 @@ namespace DemoReader
 				{
 					int classid = int.Parse(Encoding.UTF8.GetString(queue.Front().Memory.Span)); // TODO: My intuition tells me this can be optimized, but i am sick of this code RN
 					instanceBaselines[classid] = new ArraySegment<byte>(userdata.Slice(0, (int)userDataLength / 8).ToArray());
+
+					queue.PopFront();
 				}
 				else if (table.name == "modelprecache")
 				{
@@ -243,6 +234,18 @@ namespace DemoReader
 			for (int i = 0; i < serverClassCount; i++)
 			{
 				classes[i] = ServerClass.Parse(ref stream, dataTables);
+			}
+
+			for (int a = 0; a < dataTables[classes[40].dataTableID].properties.Count; a++)
+			{
+				var prop = dataTables[classes[40].dataTableID].properties[a];
+				//Console.WriteLine($"{a}: {prop.varName}");
+			}
+
+			for (int a = 0; a < classes[40].properties.Length; a++)
+			{
+				var prop = classes[40].properties[a];
+				//Console.WriteLine($"{a}: {prop.varName}");
 			}
 
 			return classes;
@@ -336,12 +339,36 @@ namespace DemoReader
 			return Encoding.UTF8.GetString(bytes);
 		}
 
-		public unsafe static string ReadCStyleString(this ref SpanBitStream bs)
+		public static string ReadCStyleString(this ref SpanBitStream bs)
 		{
 			Span<byte> bytes = stackalloc byte[1024];
 			bs.ReadUntill(0, bytes);
 
 			return Encoding.UTF8.GetString(bytes);
+		}
+
+		public static uint ReadUnsignedVarInt(this ref SpanBitStream bs)
+		{
+			uint tmpByte = 0x80;
+			uint result = 0;
+			for (int count = 0; (tmpByte & 0x80) != 0; count++)
+			{
+				if (count > 5)
+				{
+					throw new InvalidDataException("VarInt32 out of range");
+				}
+
+				tmpByte = bs.ReadByte();
+				result |= (tmpByte & 0x7F) << (7 * count);
+			}
+
+			return result;
+		}
+
+		public static int ReadSignedVarInt(this ref SpanBitStream bs)
+		{
+			uint result = bs.ReadUnsignedVarInt();
+			return (int)((result >> 1) ^ -(result & 1));
 		}
 	}
 }
