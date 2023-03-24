@@ -15,7 +15,7 @@ namespace DemoTracker
 
 		public DemoSummary(string path)
 		{
-			_parser = new(File.OpenRead(path));
+			_parser = new DemoParser(File.OpenRead(path));
 			_gameTracker = new GameTracker(_parser);
 			_playerTracker = new PlayerTracker(_parser);
 		}
