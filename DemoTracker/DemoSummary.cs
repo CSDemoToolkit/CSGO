@@ -23,13 +23,8 @@ namespace DemoTracker
 		public void Process()
 		{
 			_parser.ParseHeader();
-
 			_parser.TickDone += Parser_TickDone;
-			Console.WriteLine("Starting");
-
 			_parser.ParseToEnd();
-			Console.WriteLine("Done!");
-			Console.WriteLine(_currentTick);
 		}
 
 		public TickSummary GetTickSummary(int tick)

@@ -161,18 +161,37 @@ namespace DemoTracker
 			_nextSegmentStartTick = -1;
 			if (indexOfCurrentSegment > 0)
 			{
+#if NET6_0_OR_GREATER
 				_prevSegmentEndTick = _segmentsByTick.GetValueAtIndex(indexOfCurrentSegment - 1).EndTick;
+#else
+				int prevSegmentKey = _segmentsByTick.Keys[indexOfCurrentSegment - 1];
+				_prevSegmentEndTick = _segmentsByTick[prevSegmentKey].EndTick;
+#endif
 			}
 			if (indexOfCurrentSegment < _segmentsByTick.Count - 1)
 			{
+#if NET6_0_OR_GREATER
 				_nextSegmentStartTick = _segmentsByTick.GetValueAtIndex(indexOfCurrentSegment + 1).StartTick;
+#else
+				int nextSegmentKey = _segmentsByTick.Keys[indexOfCurrentSegment + 1];
+				_nextSegmentStartTick = _segmentsByTick[nextSegmentKey].StartTick;
+#endif
 			}
 			return this[tick];
 		}
 
 		private ValueSegment? FindSegmentBeforeTick(int tick)
 		{
+#if NET6_0_OR_GREATER
 			return _segmentsByTick.Values.LastOrDefault(x => x.StartTick <= tick, null);
+#else
+			ValueSegment segmentBeforeTick = _segmentsByTick.Values.LastOrDefault(x => x.StartTick <= tick);
+			if (segmentBeforeTick == default(ValueSegment))
+			{
+				return null;
+			}
+			return segmentBeforeTick;
+#endif
 		}
 
 		private void UpdateSegmentsAfterTick(int tick)

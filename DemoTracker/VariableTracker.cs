@@ -36,7 +36,7 @@ namespace Tracker
 			{
 				throw new IndexOutOfRangeException($"Cannot add tick {tick}. Tick cannot be negative.");
 			}
-			int closestUpperBoundTickKey = _valueByTick.Keys.LastOrDefault(x => x <= tick, -1);
+			int closestUpperBoundTickKey = _valueByTick.Keys.LastOrDefault(x => x <= tick);
 			if (closestUpperBoundTickKey > 0 && EqualityComparer<T?>.Default.Equals(value, _valueByTick[closestUpperBoundTickKey]))
 			{
 				// Value hasn't changed, do not add
@@ -89,7 +89,18 @@ namespace Tracker
 		{
 			// TODO: Implement Binary Search to search for values. Not implemented as of now because 
 			// _valueByTick.keys is an IList, which doesn't support .BinarySearch(index), like List does.
+#if NET6_0_OR_GREATER
 			int _prevValueTick = _valueByTick.Keys.LastOrDefault(x => x <= tick, -1);
+#else
+			int _prevValueTick = _valueByTick.Keys.LastOrDefault(x => x <= tick);
+			if (_prevValueTick == default(int))
+			{
+				if (_valueByTick.Count == 0 || tick < _prevValueTick)
+				{
+					_prevValueTick = -1;
+				}
+			}
+#endif
 			if (_prevValueTick < 0)
 			{
 				// tick is before first tick in List
@@ -107,7 +118,11 @@ namespace Tracker
 				// tick is between two ticks in List
 				int nextValueTickIndex = _valueByTick.IndexOfKey(_prevValueTick) + 1;
 				_prevValue = _valueByTick[_prevValueTick];
+#if NET6_0_OR_GREATER
 				_nextValueTick = _valueByTick.GetKeyAtIndex(nextValueTickIndex);
+#else
+				_nextValueTick = _valueByTick.Keys[nextValueTickIndex];
+#endif
 			}
 
 			return _prevValue;
