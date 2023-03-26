@@ -90,12 +90,12 @@ namespace Tracker
 			// TODO: Implement Binary Search to search for values. Not implemented as of now because 
 			// _valueByTick.keys is an IList, which doesn't support .BinarySearch(index), like List does.
 #if NET6_0_OR_GREATER
-			int _prevValueTick = _valueByTick.Keys.LastOrDefault(x => x <= tick, -1);
+			_prevValueTick = _valueByTick.Keys.LastOrDefault(x => x <= tick, -1);
 #else
-			int _prevValueTick = _valueByTick.Keys.LastOrDefault(x => x <= tick);
+			_prevValueTick = _valueByTick.Keys.LastOrDefault(x => x <= tick);
 			if (_prevValueTick == default(int))
 			{
-				if (_valueByTick.Count == 0 || tick < _prevValueTick)
+				if (_valueByTick.Count == 0 || _valueByTick.Keys.First() > tick)
 				{
 					_prevValueTick = -1;
 				}
