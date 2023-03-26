@@ -29,7 +29,7 @@ namespace DemoInfo.DP.Handler
                     // enter flag
                     if (reader.ReadBit())
                     {
-                        Console.WriteLine($"{currentEntity} - Create");
+                        //Console.WriteLine($"{currentEntity} - Create");
                         //create it
                         var e = ReadEnterPVS(reader, currentEntity, parser);
 
@@ -39,7 +39,7 @@ namespace DemoInfo.DP.Handler
                     }
                     else
                     {
-                        Console.WriteLine($"{currentEntity} - Update");
+                        //Console.WriteLine($"{currentEntity} - Update");
                         // preserve / update
                         Entity e = parser.Entities[currentEntity];
                         e.ApplyUpdate(reader);
@@ -47,7 +47,7 @@ namespace DemoInfo.DP.Handler
                 }
                 else
                 {
-                    Console.WriteLine($"{currentEntity} - Destroy");
+                    //Console.WriteLine($"{currentEntity} - Destroy");
                     Entity e = parser.Entities[currentEntity];
                     e?.ServerClass.AnnounceDestroyedEntity(e);
 
@@ -71,7 +71,7 @@ namespace DemoInfo.DP.Handler
         {
             //What kind of entity?
             int serverClassID = (int)reader.ReadInt(parser.SendTableParser.ClassBits);
-			Console.WriteLine($"EntityID: {id}, ServerClass: {serverClassID}");
+			//Console.WriteLine($"EntityID: {id}, ServerClass: {serverClassID}");
 			//Console.WriteLine($"    {parser.SendTableParser.ServerClasses.Count}-{parser.SendTableParser.ClassBits}");
 
 			//So find the correct server class

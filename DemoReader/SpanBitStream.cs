@@ -129,17 +129,19 @@ namespace DemoReader
             }
         }
 
-        public void ReadUntill(byte b1, byte b2, scoped Span<byte> buff)
+        public int ReadUntill(byte b1, byte b2, scoped Span<byte> buff)
         {
             for (int i = 0; i < buff.Length; i++)
             {
                 byte c = ReadByte();
 
                 if (c == b1 || c == b2)
-                    return;
+                    return i;
 
                 buff[i] = c;
             }
+
+			return buff.Length;
         }
     }
 }

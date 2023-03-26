@@ -1,4 +1,5 @@
-﻿using DemoInfo.DP.Handler;
+﻿using DemoInfo.BitStreamImpl;
+using DemoInfo.DP.Handler;
 using DemoInfo.DT;
 using System;
 using System.Collections.Generic;
@@ -48,22 +49,27 @@ namespace DemoInfo.DP
             int index = -1;
             var entries = new List<PropertyEntry>();
 
-            Console.WriteLine("Reading field index");
+			var s = (UnsafeBitStream)reader;
+			//Console.WriteLine($"Reading field index - {s.Offset}");
             //No read them. 
             while ((index = ReadFieldIndex(reader, index, newWay)) != -1)
             {
-                Console.WriteLine($"        {index} - {newWay} - {Props[index].Entry.Prop.Name}");
+                //Console.WriteLine($"        {index} - {Props[index].Entry.Prop.Priority} - {Props[index].Entry.Prop.Name}");
                 entries.Add(Props[index]);
             }
 
-			Console.WriteLine($"	{entries.Count}");
+			//Console.WriteLine($"	{entries.Count}");
 
 			//Now read the updated props
+			index = 0;
 			foreach (var prop in entries)
             {
-                prop.Decode(reader, this);
+				//Console.Write($"        {index} - {prop.Entry.Prop.Type} - {prop.Entry.Prop.Name} - {s.Offset}");
+				prop.Decode(reader, this);
+				index++;
             }
-        }
+			//Console.WriteLine("end");
+		}
 
         private int ReadFieldIndex(IBitStream reader, int lastIndex, bool bNewWay)
         {
@@ -150,7 +156,8 @@ namespace DemoInfo.DP
                     {
                         IntRecived(this, new PropertyUpdateEventArgs<int>(val, e, this));
                     }
-                }
+					//Console.WriteLine($" - {val}");
+				}
                     break;
                 case SendPropertyType.Int64:
                 {
@@ -159,7 +166,8 @@ namespace DemoInfo.DP
                     {
                         Int64Received(this, new PropertyUpdateEventArgs<long>(val, e, this));
                     }
-                }
+					//Console.WriteLine($" - {val}");
+				}
                     break;
                 case SendPropertyType.Float:
                 {
@@ -168,7 +176,8 @@ namespace DemoInfo.DP
                     {
                         FloatRecived(this, new PropertyUpdateEventArgs<float>(val, e, this));
                     }
-                }
+					//Console.WriteLine($" - {val}");
+				}
                     break;
                 case SendPropertyType.Vector:
                 {
@@ -177,7 +186,8 @@ namespace DemoInfo.DP
                     {
                         VectorRecived(this, new PropertyUpdateEventArgs<Vector>(val, e, this));
                     }
-                }
+					//Console.WriteLine($" - {val}");
+				}
                     break;
                 case SendPropertyType.Array:
                 {
@@ -186,7 +196,8 @@ namespace DemoInfo.DP
                     {
                         ArrayRecived(this, new PropertyUpdateEventArgs<object[]>(val, e, this));
                     }
-                }
+					//Console.WriteLine($" - {val.Length}");
+				}
                     break;
                 case SendPropertyType.String:
                 {
@@ -195,7 +206,8 @@ namespace DemoInfo.DP
                     {
                         StringRecived(this, new PropertyUpdateEventArgs<string>(val, e, this));
                     }
-                }
+					//Console.WriteLine($" - {val.Length}");
+				}
                     break;
                 case SendPropertyType.VectorXY:
                 {
@@ -204,7 +216,8 @@ namespace DemoInfo.DP
                     {
                         VectorRecived(this, new PropertyUpdateEventArgs<Vector>(val, e, this));
                     }
-                }
+					//Console.WriteLine($" - {val}");
+				}
                     break;
                 default:
                     throw new NotImplementedException("Could not read property. Abort! ABORT! (is it a long?)");

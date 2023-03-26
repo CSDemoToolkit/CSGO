@@ -11,7 +11,7 @@ namespace DemoInfo.BitStreamImpl
         private const int SLED = 4;
         private const int BUFSIZE = 2048 + SLED;
 
-        private int Offset;
+        public int Offset;
         private Stream Underlying;
         private GCHandle HBuffer;
         private byte* PBuffer;
@@ -21,7 +21,7 @@ namespace DemoInfo.BitStreamImpl
         private bool EndOfStream = false;
 
         private readonly Stack<long> ChunkTargets = new Stack<long>();
-        private long LazyGlobalPosition = 0;
+        public long LazyGlobalPosition = 0;
 
         private long ActualGlobalPosition
         {

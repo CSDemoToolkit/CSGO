@@ -1,5 +1,44 @@
 ﻿namespace DemoReader
 {
+	public struct SendPropertyArrayProp
+	{
+		public SendPropertyType type;
+		public string varName;
+		public SendPropertyFlags flags;
+		public int priority;
+		public string dtName;
+		public float lowValue;
+		public float highValue;
+		public int numBits;
+
+		public SendPropertyArrayProp(SendProperty p)
+		{
+			type = p.type;
+			varName = p.varName;
+			flags = p.flags;
+			priority = p.priority;
+			dtName = p.dtName;
+			lowValue = p.lowValue;
+			highValue = p.highValue;
+			numBits = p.numBits;
+		}
+
+		public SendProperty ToSendProperty()
+		{
+			return new()
+			{
+				type = type,
+				varName = varName,
+				flags = flags,
+				priority = priority,
+				dtName = dtName,
+				lowValue = lowValue,
+				highValue = highValue,
+				numBits = numBits
+			};
+		}
+	}
+
     public struct SendProperty
     {
         public SendPropertyType type;
@@ -12,7 +51,7 @@
         public float highValue;
         public int numBits;
 
-		public int arrayElementProp;
+		public SendPropertyArrayProp arrayElementProp;
 
         public static SendProperty Parse(SpanStream<byte> stream)
         {

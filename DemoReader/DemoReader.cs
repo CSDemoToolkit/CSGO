@@ -2,6 +2,7 @@
 using System.Data;
 using System.IO.MemoryMappedFiles;
 using System.Numerics;
+using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -10,6 +11,7 @@ namespace DemoReader
 	public class DemoReader
 	{
 		public List<SendTable> DataTables = new List<SendTable>();
+		public List<StringTable> StringTables = new List<StringTable>();
 		public ServerClass[] ServerClasses;
 		public List<EventDescriptor> EventDescriptors = new List<EventDescriptor>();
 
@@ -17,7 +19,7 @@ namespace DemoReader
 		public string[] modelPrecaches = new string[847];
 
 		public PlayerInfo[] players = new PlayerInfo[64];
-		public Entity[] entities = new Entity[512];
+		public Entity[] entities = new Entity[1024];
 
 		public int ServerClassesBits;
 
@@ -110,12 +112,26 @@ namespace DemoReader
 						PacketEntities.Parse(cmdStream, ServerClasses, entities, instanceBaselines, ServerClassesBits);
 						break;
 					case SVCMessages.svc_CreateStringTable:
+					{
 						StringTable table = StringTable.Parse(ref cmdStream);
 						var len = cmdStream.ReadProtobufVarInt();
 						SpanBitStream bitStream = cmdStream.SliceToBitStream(len);
 
-						HandleStringTable(ref table, ref bitStream, players, instanceBaselines, modelPrecaches);
+						StringTables.Add(table);
+						HandleCreateStringTable(ref table, ref bitStream, players, instanceBaselines, modelPrecaches);
 						break;
+					}
+					case SVCMessages.svc_UpdateStringTable:
+					{
+						UpdateStringTable updateTable = UpdateStringTable.Parse(ref cmdStream);
+						var len = cmdStream.ReadProtobufVarInt();
+						SpanBitStream bitStream = cmdStream.SliceToBitStream(len);
+
+						StringTable table = StringTables[(int)updateTable.tableId];
+						table.numEntries = updateTable.changedEntries;
+						HandleCreateStringTable(ref table, ref bitStream, players, instanceBaselines, modelPrecaches);
+						break;
+					}
 					case SVCMessages.svc_GameEventList:
 						EventDescriptors = GetEventDescriptors(cmdStream);
 						break;
@@ -132,7 +148,7 @@ namespace DemoReader
 			return true;
 		}
 
-		static void HandleStringTable(scoped ref StringTable table, scoped ref SpanBitStream stream, PlayerInfo[] players, ArraySegment<byte>[] instanceBaselines, string[] modelPrecaches)
+		static void HandleCreateStringTable(scoped ref StringTable table, scoped ref SpanBitStream stream, PlayerInfo[] players, ArraySegment<byte>[] instanceBaselines, string[] modelPrecaches)
 		{
 			if (stream.ReadBit())
 			{
@@ -161,14 +177,23 @@ namespace DemoReader
 						var memory = MemoryPool<byte>.Shared.Rent(1024 + bytesToCopy);
 						queue[index].Memory.Span.Slice(0, bytesToCopy).TryCopyTo(memory.Memory.Span);
 
-						stream.ReadUntill(0, 10, memory.Memory.Span.Slice(bytesToCopy)); // 10 might not be needed?
+						int pre = stream.idx;
+						int l = stream.ReadUntill(0, 10, memory.Memory.Span.Slice(bytesToCopy)); // 10 might not be needed?
+						memory.Memory.Span.Slice(l).Fill(0);
+						//if (i == 0)
+						//	Console.WriteLine($"String Delta 2: {stream.idx - pre} - '{Encoding.ASCII.GetString(memory.Memory.Span)}'");
 						queue.PushBack(memory);
 					}
 					else
 					{
-						var memory = MemoryPool<byte>.Shared.Rent(1024); // 10 might not be needed?
+						var memory = MemoryPool<byte>.Shared.Rent(1024);
 
-						stream.ReadUntill(0, 10, memory.Memory.Span);
+						int pre = stream.idx;
+						int l = stream.ReadUntill(0, 10, memory.Memory.Span); // 10 might not be needed?
+						memory.Memory.Span.Slice(l).Fill(0);
+						//if (i == 0)
+						//	Console.WriteLine($"String Delta 2: {stream.idx - pre} - '{Encoding.ASCII.GetString(memory.Memory.Span)}'");
+
 						queue.PushBack(memory);
 					}
 				}
@@ -195,16 +220,21 @@ namespace DemoReader
 				}
 				else if (table.name == "instancebaseline")
 				{
-					int classid = int.Parse(Encoding.UTF8.GetString(queue.Front().Memory.Span)); // TODO: My intuition tells me this can be optimized, but i am sick of this code RN
+					//Console.WriteLine($"{i} - {stream.idx}");
+					int classid = int.Parse(Encoding.UTF8.GetString(queue.Back().Memory.Span)); // TODO: My intuition tells me this can be optimized, but i am sick of this code RN
+					//Console.WriteLine($"ClassID: {classid}");
 					instanceBaselines[classid] = new ArraySegment<byte>(userdata.Slice(0, (int)userDataLength / 8).ToArray());
-
-					queue.PopFront();
 				}
 				else if (table.name == "modelprecache")
 				{
-					modelPrecaches[idx] = Encoding.UTF8.GetString(queue.Front().Memory.Span);
+					modelPrecaches[idx] = Encoding.UTF8.GetString(queue.Back().Memory.Span);
 				}
 			}
+		}
+
+		static void HandleUpdateStringTable()
+		{
+
 		}
 
 		static List<SendTable> GetDataTables(ref SpanStream<byte> stream)

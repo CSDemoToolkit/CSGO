@@ -17,7 +17,7 @@ namespace Runner
             DemoReader.DemoReader demoReader = new();
             Stopwatch sw = Stopwatch.StartNew();
 
-            int useDemoInfo = 0;
+            int useDemoInfo = 1;
 
             if (useDemoInfo == 0)
             {

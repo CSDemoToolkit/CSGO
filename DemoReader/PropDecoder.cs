@@ -33,6 +33,7 @@ namespace DemoReader
 		{
 			if (prop.flags.HasFlag(SendPropertyFlags.VarInt))
 			{
+				Console.WriteLine("			Var Int");
 				if (prop.flags.HasFlag(SendPropertyFlags.Unsigned))
 				{
 					return (int)bitStream.ReadUnsignedVarInt();
@@ -172,20 +173,25 @@ namespace DemoReader
 
             object[] result = new object[nElements];
 
-			ref SendProperty temp = ref properties[prop.arrayElementProp];
+			SendProperty temp = prop.arrayElementProp.ToSendProperty();
+			//Console.WriteLine($"			Decoding array - {temp.type} - {temp.varName} - {bitStream.idx + 32} - {prop.arrayElementProp}");
             for (int i = 0; i < nElements; i++)
             {
                 result[i] = DecodeProp(temp, ref bitStream, properties);
-            }
+				//Console.WriteLine($"			{i}: {result[i].GetType()} - {temp.numBits} - {bitStream.idx + 32}");
+			}
 
             return result;
         }
 
         public static string DecodeString(in SendProperty prop, ref SpanBitStream bitStream)
         {
-			Span<byte> buff = stackalloc byte[1024];
-			bitStream.ReadBytes((int)bitStream.ReadUInt(9), buff);
+			int bytes = (int)bitStream.ReadUInt(9);
 
+			Span<byte> buff = stackalloc byte[bytes];
+			bitStream.ReadBytes(bytes * 8, buff);
+
+			//Console.WriteLine($"\n			{bytes} - {buff.Length} - {Encoding.Default.GetString(buff)}");
 			return Encoding.Default.GetString(buff);
         }
 

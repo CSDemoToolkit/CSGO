@@ -118,11 +118,10 @@ namespace DemoReader
 					}
 				}
 			}
-			/*
-			*/
 
 			serverClass.properties = flattendProps.ToArray();
 
+			/*
 			GetProperties(dataTables[serverClass.dataTableID], dataTables, pri, sec, false);
 
 			//serverClass.properties.AddRange(pri);
@@ -131,6 +130,7 @@ namespace DemoReader
 
 			pri.AddRange(sec);
 			serverClass.properties.AddRange(pri.OrderBy(x => x.priority));
+			*/
 
 			return serverClass;
         }
@@ -155,7 +155,7 @@ namespace DemoReader
 						break;
 					default:
 						if (prop.type == SendPropertyType.Array)
-							prop.arrayElementProp = i - 1;
+							prop.arrayElementProp = new(table.properties[i - 1]);
 
 						if (isPri)
 						{
@@ -237,7 +237,7 @@ namespace DemoReader
 				{
 					if (property.type == SendPropertyType.Array)
 					{
-						property.arrayElementProp = i - 1;
+						property.arrayElementProp = new(table.properties[i - 1]);
 
 						flattenedProps.Add(property);
 					}

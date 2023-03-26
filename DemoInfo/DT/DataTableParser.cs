@@ -81,7 +81,7 @@ namespace DemoInfo.DT
 			for (int a = 0; a < ServerClasses[40].FlattenedProps.Count; a++)
 			{
 				var prop = ServerClasses[40].FlattenedProps[a].Prop;
-				Console.WriteLine($"{a}: {prop.Name}");
+				//Console.WriteLine($"{a}: {prop.Name}");
 			}
 		}
 
@@ -108,7 +108,6 @@ namespace DemoInfo.DT
             priorities.AddRange(flattenedProps.Select(a => a.Prop.Priority).Distinct());
             priorities.Sort();
 
-			/*
             int start = 0;
             for (int priorityIndex = 0; priorityIndex < priorities.Count; priorityIndex++)
             {
@@ -144,6 +143,7 @@ namespace DemoInfo.DT
                     }
                 }
             }
+			/*
 			*/
         }
 
@@ -220,7 +220,7 @@ namespace DemoInfo.DT
                 {
                     if (property.Type == SendPropertyType.Array)
                     {
-                        flattenedProps.Add(new FlattenedPropEntry(prefix + property.Name, property, table.Properties[i - 1]));
+						flattenedProps.Add(new FlattenedPropEntry(prefix + property.Name, property, table.Properties[i - 1]));
                     }
                     else
                     {
