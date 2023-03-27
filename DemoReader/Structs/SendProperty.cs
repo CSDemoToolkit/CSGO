@@ -1,4 +1,6 @@
-﻿namespace DemoReader
+﻿using System.IO;
+
+namespace DemoReader
 {
 	public struct SendPropertyArrayProp
 	{
@@ -25,7 +27,7 @@
 
 		public SendProperty ToSendProperty()
 		{
-			return new()
+			return new SendProperty()
 			{
 				type = type,
 				varName = varName,

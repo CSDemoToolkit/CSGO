@@ -1,4 +1,6 @@
-﻿namespace DemoReader
+﻿using System.IO;
+
+namespace DemoReader
 {
 	public struct UpdateStringTable
 	{
