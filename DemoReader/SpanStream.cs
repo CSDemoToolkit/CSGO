@@ -16,11 +16,12 @@ namespace DemoReader
         public bool IsEnd => idx >= buff.Length;
 
         Span<T> buff;
-        int idx = 0;
+        int idx;
 
         public SpanStream(Span<T> buff)
         {
             this.buff = buff;
+			idx = 0;
         }
 
         public T Read()

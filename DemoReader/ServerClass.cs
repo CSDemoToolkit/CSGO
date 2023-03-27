@@ -156,7 +156,7 @@ namespace DemoReader
 						break;
 					default:
 						if (prop.type == SendPropertyType.Array)
-							prop.arrayElementProp = new(table.properties[i - 1]);
+							prop.arrayElementProp = new SendPropertyArrayProp(table.properties[i - 1]);
 
 						if (isPri)
 						{
@@ -238,7 +238,7 @@ namespace DemoReader
 				{
 					if (property.type == SendPropertyType.Array)
 					{
-						property.arrayElementProp = new(table.properties[i - 1]);
+						property.arrayElementProp = new SendPropertyArrayProp(table.properties[i - 1]);
 
 						flattenedProps.Add(property);
 					}

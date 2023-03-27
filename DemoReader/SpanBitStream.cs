@@ -6,11 +6,12 @@ namespace DemoReader
     public ref struct SpanBitStream
     {
         public Span<byte> buff;
-        public int idx = 0;
+        public int idx;
 
         public SpanBitStream(Span<byte> buff)
         {
             this.buff = buff;
+			idx = 0;
         }
 
         public bool ReadBit()
