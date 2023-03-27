@@ -15,7 +15,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DemoReader", "DemoReader\De
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{F728EF86-BEC6-4399-9F74-0574680591DE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemoInfo.Tests", "DemoInfo.Tests\DemoInfo.Tests.csproj", "{577B739F-9209-46F4-94EC-312779C376A7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DemoInfo.Tests", "DemoInfo.Tests\DemoInfo.Tests.csproj", "{577B739F-9209-46F4-94EC-312779C376A7}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DemoReader.Tests", "DemoReader.Tests\DemoReader.Tests.csproj", "{10192C76-30A0-4FC8-A975-8F7F8CCB448C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -86,12 +88,23 @@ Global
 		{577B739F-9209-46F4-94EC-312779C376A7}.SavePropValues|Any CPU.Build.0 = Debug|Any CPU
 		{577B739F-9209-46F4-94EC-312779C376A7}.YoloDebug|Any CPU.ActiveCfg = Debug|Any CPU
 		{577B739F-9209-46F4-94EC-312779C376A7}.YoloDebug|Any CPU.Build.0 = Debug|Any CPU
+		{10192C76-30A0-4FC8-A975-8F7F8CCB448C}.Bitstream-Debugging|Any CPU.ActiveCfg = Debug|Any CPU
+		{10192C76-30A0-4FC8-A975-8F7F8CCB448C}.Bitstream-Debugging|Any CPU.Build.0 = Debug|Any CPU
+		{10192C76-30A0-4FC8-A975-8F7F8CCB448C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{10192C76-30A0-4FC8-A975-8F7F8CCB448C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{10192C76-30A0-4FC8-A975-8F7F8CCB448C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{10192C76-30A0-4FC8-A975-8F7F8CCB448C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{10192C76-30A0-4FC8-A975-8F7F8CCB448C}.SavePropValues|Any CPU.ActiveCfg = Debug|Any CPU
+		{10192C76-30A0-4FC8-A975-8F7F8CCB448C}.SavePropValues|Any CPU.Build.0 = Debug|Any CPU
+		{10192C76-30A0-4FC8-A975-8F7F8CCB448C}.YoloDebug|Any CPU.ActiveCfg = Debug|Any CPU
+		{10192C76-30A0-4FC8-A975-8F7F8CCB448C}.YoloDebug|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{577B739F-9209-46F4-94EC-312779C376A7} = {F728EF86-BEC6-4399-9F74-0574680591DE}
+		{10192C76-30A0-4FC8-A975-8F7F8CCB448C} = {F728EF86-BEC6-4399-9F74-0574680591DE}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {EAF2CA08-D6A4-4B8E-9BD1-C360A42110A2}
