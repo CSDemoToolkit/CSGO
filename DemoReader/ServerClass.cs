@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 
 namespace DemoReader
 {
@@ -103,7 +104,11 @@ namespace DemoReader
 			/*
 			*/
 
+#if NET7_0_OR_GREATER
 			var priorities = flattendProps.Select(x => x.priority).Append(64).Distinct().Order();
+#else
+			var priorities = flattendProps.Select(x => x.priority).Append(64).Distinct().OrderByDescending(x => x);
+#endif
 			int idx = 0;
 			foreach (var priority in priorities)
 			{

@@ -6,7 +6,6 @@ using System.IO;
 using System.IO.MemoryMappedFiles;
 using System.Linq;
 using System.Numerics;
-using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -89,7 +88,11 @@ namespace DemoReader
 
 			DataTables = GetDataTables(ref spanStream);
 			ServerClasses = GetServerClasses(ref spanStream, DataTables);
+#if NET5_0_OR_GREATER || NETCOREAPP3_0_OR_GREATER
 			ServerClassesBits = BitOperations.Log2(BitOperations.RoundUpToPowerOf2((uint)ServerClasses.Length));
+#else
+			ServerClassesBits = Util.BitOperations.Log2((int)Util.BitOperations.RoundUpToPowerOf2((uint)ServerClasses.Length));
+#endif
 
 			return true;
 		}
@@ -162,7 +165,11 @@ namespace DemoReader
 			Span<byte> userdata = stackalloc byte[16384];
 
 			var queue = new CircularBuffer<IMemoryOwner<byte>>(32);
+#if NET5_0_OR_GREATER || NETCOREAPP3_0_OR_GREATER
 			int entryBits = BitOperations.Log2(table.maxEntries);
+#else
+			int entryBits = Util.BitOperations.Log2((int)table.maxEntries);
+#endif
 			for (int i = 0; i < table.numEntries; i++)
 			{
 				userdata.Fill(0);
@@ -367,7 +374,11 @@ namespace DemoReader
 
 		public static string ReadCustomString(this ref SpanBitStream bs, uint length)
 		{
+#if NET5_0_OR_GREATER || NETCOREAPP3_0_OR_GREATER
 			Span<byte> bytes = stackalloc byte[(int)BitOperations.RoundUpToPowerOf2(length)];
+#else
+			Span<byte> bytes = stackalloc byte[(int)Util.BitOperations.RoundUpToPowerOf2(length)];
+#endif
 			bs.ReadBytes(length, bytes);
 
 			return Encoding.UTF8.GetString(bytes);

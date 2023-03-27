@@ -2,9 +2,7 @@
 using System.Buffers;
 using System.IO;
 using System.Numerics;
-using System.Reflection.PortableExecutable;
 using System.Runtime.CompilerServices;
-using System.Runtime.Intrinsics.Arm;
 using System.Text;
 
 namespace DemoReader
