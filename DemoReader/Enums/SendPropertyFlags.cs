@@ -1,4 +1,6 @@
-﻿namespace DemoReader {
+﻿using System;
+
+namespace DemoReader {
 	[Flags]
 	public enum SendPropertyFlags {
 		/// <summary>

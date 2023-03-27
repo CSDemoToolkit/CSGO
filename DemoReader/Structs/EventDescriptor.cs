@@ -1,4 +1,7 @@
-﻿namespace DemoReader
+﻿using System.Collections.Generic;
+using System.IO;
+
+namespace DemoReader
 {
     public struct EventDescriptor
     {
