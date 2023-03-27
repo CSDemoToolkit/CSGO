@@ -7,6 +7,8 @@ namespace DemoTracker
 {
 	public class DemoSummary
 	{
+		public uint FinalTick = 0;
+
 		private DemoParser _parser;
 		private GameTracker _gameTracker;
 		private PlayerTracker _playerTracker;
@@ -25,6 +27,7 @@ namespace DemoTracker
 			_parser.ParseHeader();
 			_parser.TickDone += Parser_TickDone;
 			_parser.ParseToEnd();
+			FinalTick = (uint)_currentTick;
 		}
 
 		public TickSummary GetTickSummary(int tick)
