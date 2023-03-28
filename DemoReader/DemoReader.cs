@@ -189,7 +189,14 @@ namespace DemoReader
 						queue[index].Memory.Span.Slice(0, bytesToCopy).TryCopyTo(memory.Memory.Span);
 
 						int pre = stream.idx;
-						int l = stream.ReadUntill(0, 10, memory.Memory.Span.Slice(bytesToCopy)); // 10 might not be needed?
+#if NET7_0_OR_GREATER
+						int l = stream.ReadUntil(0, 10, memory.Memory.Span.Slice(bytesToCopy)); // 10 might not be needed?
+#else
+						var span = memory.Memory.Span.Slice(bytesToCopy);
+						var readUntilResult = stream.ReadUntil(0, 10, span.Length);
+						span = readUntilResult.Item1;
+						int l = readUntilResult.Item2;
+#endif
 						memory.Memory.Span.Slice(l).Fill(0);
 						//if (i == 0)
 						//	Console.WriteLine($"String Delta 2: {stream.idx - pre} - '{Encoding.ASCII.GetString(memory.Memory.Span)}'");
@@ -200,7 +207,14 @@ namespace DemoReader
 						var memory = MemoryPool<byte>.Shared.Rent(1024);
 
 						int pre = stream.idx;
-						int l = stream.ReadUntill(0, 10, memory.Memory.Span); // 10 might not be needed?
+#if NET7_0_OR_GREATER
+						int l = stream.ReadUntil(0, 10, memory.Memory.Span); // 10 might not be needed?
+#else
+						var span = memory.Memory.Span;
+						var readUntilResult = stream.ReadUntil(0, 10, span.Length);
+						span = readUntilResult.Item1;
+						int l = readUntilResult.Item2;
+#endif
 						memory.Memory.Span.Slice(l).Fill(0);
 						//if (i == 0)
 						//	Console.WriteLine($"String Delta 2: {stream.idx - pre} - '{Encoding.ASCII.GetString(memory.Memory.Span)}'");
@@ -220,7 +234,11 @@ namespace DemoReader
 				if (!table.userDataFixedSize)
 					userDataLength = stream.ReadUInt(14) * 8;
 
+#if NET7_0_OR_GREATER
 				stream.ReadBytes(userDataLength, userdata);
+#else
+				userdata = stream.ReadBytes(userDataLength);
+#endif
 
 				if (table.name == "userinfo")
 				{
@@ -315,6 +333,7 @@ namespace DemoReader
 
 	public static class SpanStreamExtensions
 	{
+#if NET5_0_OR_GREATER || NETCOREAPP3_0_OR_GREATER
 		public unsafe static ref T ReadAs<T>(this ref SpanStream<byte> stream) where T : unmanaged
 		{
 			return ref MemoryMarshal.AsRef<T>(stream.Read(sizeof(T)));
@@ -344,7 +363,17 @@ namespace DemoReader
 		{
 			return Encoding.UTF8.GetString(stream.Read(stream.ReadInt()));
 		}
+#else
+		public static float ReadFloat(this ref SpanStream<byte> stream)
+		{
+			return MemoryMarshal.Cast<byte, float>(stream.Read(4))[0];
+		}
 
+		public static short ReadShort(this ref SpanStream<byte> stream)
+		{
+			return MemoryMarshal.Cast<byte, short>(stream.Read(2))[0];
+		}
+#endif
 		public static SpanBitStream SliceToBitStream(this ref SpanStream<byte> stream, int length)
 		{
 			return new SpanBitStream(stream.Read(length));
@@ -374,12 +403,13 @@ namespace DemoReader
 
 		public static string ReadCustomString(this ref SpanBitStream bs, uint length)
 		{
-#if NET5_0_OR_GREATER || NETCOREAPP3_0_OR_GREATER
+#if NET7_0_OR_GREATER
 			Span<byte> bytes = stackalloc byte[(int)BitOperations.RoundUpToPowerOf2(length)];
+			bs.ReadBytes(length, bytes);
 #else
 			Span<byte> bytes = stackalloc byte[(int)Util.BitOperations.RoundUpToPowerOf2(length)];
+			bytes = bs.ReadBytes(length);
 #endif
-			bs.ReadBytes(length, bytes);
 
 			return Encoding.UTF8.GetString(bytes);
 		}
@@ -387,7 +417,11 @@ namespace DemoReader
 		public static string ReadCStyleString(this ref SpanBitStream bs)
 		{
 			Span<byte> bytes = stackalloc byte[1024];
-			bs.ReadUntill(0, bytes);
+#if NET7_0_OR_GREATER
+			bs.ReadUntil(0, bytes);
+#else
+			bytes = bs.ReadUntil(0, bytes.Length);
+#endif
 
 			return Encoding.UTF8.GetString(bytes);
 		}

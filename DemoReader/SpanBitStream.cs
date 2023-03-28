@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text;
 
 namespace DemoReader
@@ -39,6 +40,7 @@ namespace DemoReader
             return b;
         }
 
+#if NET7_0_OR_GREATER
 		public void ReadBytes(int bits, scoped Span<byte> buff)
         {
             for (int i = 0; i < bits; i++)
@@ -60,8 +62,8 @@ namespace DemoReader
                 buff[i / 8] |= (byte)(1 << i % 8);
             }
         }
-
-        public int ReadInt(int bits)
+		
+		public int ReadInt(int bits)
         {
             Span<byte> buff = stackalloc byte[4];
             ReadBytes(bits, buff);
@@ -117,7 +119,7 @@ namespace DemoReader
             return Encoding.UTF8.GetString(buff);
 		}
 
-		public void ReadUntill(byte b, scoped Span<byte> buff)
+		public void ReadUntil(byte b, scoped Span<byte> buff)
         {
             for (int i = 0; i < buff.Length; i++)
             {
@@ -130,7 +132,7 @@ namespace DemoReader
             }
         }
 
-        public int ReadUntill(byte b1, byte b2, scoped Span<byte> buff)
+        public int ReadUntil(byte b1, byte b2, scoped Span<byte> buff)
         {
             for (int i = 0; i < buff.Length; i++)
             {
@@ -144,5 +146,119 @@ namespace DemoReader
 
 			return buff.Length;
         }
-    }
+#else
+		public byte[] ReadBytes(int bits)
+		{
+			var buff = new byte[(bits / 8) + 1];
+			for (int i = 0; i < bits; i++)
+			{
+				if (!ReadBit())
+					continue;
+
+				buff[i / 8] |= (byte)(1 << i % 8);
+			}
+			return buff;
+		}
+
+		public byte[] ReadBytes(uint bits)
+		{
+			var buff = new byte[(bits / 8) + 1];
+			for (int i = 0; i < bits; i++)
+			{
+				if (!ReadBit())
+					continue;
+
+				buff[i / 8] |= (byte)(1 << i % 8);
+			}
+			return buff;
+		}
+
+		public int ReadInt(int bits)
+		{
+			Span<byte> buff = stackalloc byte[4];
+			buff = ReadBytes(bits);
+
+			return BitConverter.ToInt32(buff);
+		}
+
+		public uint ReadUInt(int bits)
+		{
+			Span<byte> buff = stackalloc byte[4];
+			buff = ReadBytes(bits);
+
+			return BitConverter.ToUInt32(buff);
+		}
+
+		public long ReadLong(int bits)
+		{
+			Span<byte> buff = stackalloc byte[8];
+			buff = ReadBytes(bits);
+
+			return BitConverter.ToInt64(buff);
+		}
+
+		public ulong ReadULong(int bits)
+		{
+			Span<byte> buff = stackalloc byte[4];
+			buff = ReadBytes(bits);
+
+			return BitConverter.ToUInt64(buff);
+		}
+
+		public float ReadFloat(int bits)
+		{
+			Span<byte> buff = stackalloc byte[4];
+			buff = ReadBytes(bits);
+
+			return BitConverter.ToSingle(buff);
+		}
+
+		public double ReadDouble(int bits)
+		{
+			Span<byte> buff = stackalloc byte[8];
+			buff = ReadBytes(bits);
+
+			return BitConverter.ToDouble(buff);
+		}
+
+		public string ReadString(int length)
+		{
+			Span<byte> buff = stackalloc byte[length];
+			buff = ReadBytes(buff.Length * 8);
+
+			return Encoding.UTF8.GetString(buff);
+		}
+
+		public byte[] ReadUntil(byte b, int maxBytes)
+		{
+			List<byte> buff = new List<byte>();
+			for (int i = 0; i < maxBytes; i++)
+			{
+				byte c = ReadByte();
+
+				if (c == b)
+					return buff.ToArray();
+
+				buff[i] = c;
+			}
+			return new byte[0];
+		}
+
+		public (byte[], int) ReadUntil(byte b1, byte b2, int maxBytes)
+		{
+			List<byte> buff = new List<byte>();
+			for (int i = 0; i < maxBytes; i++)
+			{
+				byte c = ReadByte();
+
+				if (c == b1 || c == b2)
+					return (buff.ToArray(), i);
+
+				buff[i] = c;
+			}
+
+			return (new byte[0], maxBytes);
+		}
+#endif
+	}
 }
