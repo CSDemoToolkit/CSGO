@@ -1,113 +1,192 @@
 ﻿using System;
+using System.Buffers;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics.X86;
 using System.Text;
 
 namespace DemoReader
 {
-    public ref struct SpanBitStream
+    public unsafe ref struct SpanBitStream
     {
-        public Span<byte> buff;
-        public int idx = 0;
+		public Span<byte> buff;
+		public int idx = 0;
 
-        public SpanBitStream(Span<byte> buff)
-        {
-            this.buff = buff;
-        }
+		byte* bytePtr;
 
-        public bool ReadBit()
-        {
-            return (buff[idx / 8] & (1 << idx++ % 8)) != 0;
-        }
+		public SpanBitStream(Span<byte> buff)
+		{
+			this.buff = buff;
+			fixed (byte* bytePtr = buff)
+			{
+				this.bytePtr = bytePtr;
+			}
+		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public bool ReadBit()
+		{
+			return (bytePtr[idx >> 3] & (1 << (idx++ & 7))) != 0;
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Skip(int bits)
 		{
 			idx += bits;
 		}
 
-        public byte ReadByte()
-        {
-            byte b = 0;
-            b |= (byte)((ReadBit() ? 1 : 0) << 0);
-            b |= (byte)((ReadBit() ? 1 : 0) << 1);
-            b |= (byte)((ReadBit() ? 1 : 0) << 2);
-            b |= (byte)((ReadBit() ? 1 : 0) << 3);
-            b |= (byte)((ReadBit() ? 1 : 0) << 4);
-            b |= (byte)((ReadBit() ? 1 : 0) << 5);
-            b |= (byte)((ReadBit() ? 1 : 0) << 6);
-            b |= (byte)((ReadBit() ? 1 : 0) << 7);
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public byte ReadByte()
+		{
+			int offset = idx % 8;
+			int remaining = 8 - offset;
 
-            return b;
-        }
+			idx += 8;
 
+			int byteIdx = idx >> 3;
+
+			if (offset == 0)
+				return bytePtr[byteIdx - 1];
+
+			byte first = (byte)(((1 << remaining) - 1) << offset);
+			byte last = (byte)((1 << offset) - 1);
+
+			byte b = (byte)((bytePtr[byteIdx - 1] & first) >> offset);
+			b |= (byte)((bytePtr[byteIdx] & last) << remaining);
+
+			return b;
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public void Read4Bytes(byte* buff)
+		{
+			int offset = idx % 8;
+			int remaining = 8 - offset;
+
+			idx += 8 * 4;
+
+			int byteIdx = idx >> 3;
+
+			if (offset == 0)
+			{
+				buff[0] = bytePtr[byteIdx - 4];
+				buff[1] = bytePtr[byteIdx - 3];
+				buff[2] = bytePtr[byteIdx - 2];
+				buff[3] = bytePtr[byteIdx - 1];
+			}
+
+			byte first = (byte)(((1 << remaining) - 1) << offset);
+			byte last = (byte)((1 << offset) - 1);
+
+			buff[0] = (byte)(((bytePtr[byteIdx - 4] & first) >> offset) | ((bytePtr[byteIdx - 3] & last) << remaining));
+			buff[1] = (byte)(((bytePtr[byteIdx - 3] & first) >> offset) | ((bytePtr[byteIdx - 2] & last) << remaining));
+			buff[2] = (byte)(((bytePtr[byteIdx - 2] & first) >> offset) | ((bytePtr[byteIdx - 1] & last) << remaining));
+			buff[3] = (byte)(((bytePtr[byteIdx - 1] & first) >> offset) | ((bytePtr[byteIdx] & last) << remaining));
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public byte ReadBits(int bits)
+		{
+			int offset = idx % 8;
+			int remaining = 8 - offset;
+
+			idx += bits;
+
+			int byteIdx = idx >> 3;
+
+			if (remaining > bits)
+				return (byte)((bytePtr[byteIdx] & (((1 << bits) - 1) << offset)) >> offset);
+			else if (remaining == bits)
+				return (byte)((bytePtr[byteIdx - 1] & (((1 << bits) - 1) << offset)) >> offset);
+
+			byte first = (byte)(((1 << remaining) - 1) << offset);
+			byte last = (byte)((1 << (bits - remaining)) - 1);
+
+			byte b = (byte)((bytePtr[byteIdx - 1] & first) >> offset);
+			b |= (byte)((bytePtr[byteIdx] & last) << remaining);
+
+			return b;
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public void ReadBytes(int bits, byte* buff)
+		{
+			int bytes = bits / 8;
+			for (int i = 0; i < bytes; i++)
+			{
+				buff[i] = ReadByte();
+			}
+
+			int remaining = bits - bytes * 8;
+			if (remaining != 0)
+				buff[bytes] = ReadBits(remaining);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void ReadBytes(int bits, scoped Span<byte> buff)
+		{
+			int bytes = bits / 8;
+			for (int i = 0; i < bytes; i++)
+			{
+				buff[i] = ReadByte();
+			}
+
+			int remaining = bits - bytes * 8;
+			if (remaining != 0)
+				buff[bytes] = ReadBits(remaining);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public void ReadBytes(uint bits, scoped Span<byte> buff)
+		{
+			uint bytes = bits >> 3;
+			for (int i = 0; i < bytes; i++)
+			{
+				buff[i] = ReadByte();
+			}
+
+			uint remaining = bits - bytes * 8;
+			if (remaining != 0)
+				buff[(int)bytes] = ReadBits((int)remaining);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public int ReadInt(int bits)
         {
-            for (int i = 0; i < bits; i++)
-            {
-                if (!ReadBit())
-                    continue;
+			byte* buff = stackalloc byte[4];
+			ReadBytes(bits, buff);
 
-                buff[i / 8] |= (byte)(1 << i % 8);
-            }
-        }
+			return *(int*)buff;
+		}
 
-        public void ReadBytes(uint bits, scoped Span<byte> buff)
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public uint ReadUInt(int bits)
         {
-            for (int i = 0; i < bits; i++)
-            {
-                if (!ReadBit())
-                    continue;
-
-                buff[i / 8] |= (byte)(1 << i % 8);
-            }
-        }
-
-        public int ReadInt(int bits)
-        {
-            Span<byte> buff = stackalloc byte[4];
+			byte* buff = stackalloc byte[4];
             ReadBytes(bits, buff);
 
-            return BitConverter.ToInt32(buff);
-        }
+			return *(uint*)buff;
+		}
 
-        public uint ReadUInt(int bits)
-        {
-            Span<byte> buff = stackalloc byte[4];
-            ReadBytes(bits, buff);
-
-            return BitConverter.ToUInt32(buff);
-        }
-
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public long ReadLong(int bits)
 		{
-			Span<byte> buff = stackalloc byte[8];
+			byte* buff = stackalloc byte[8];
 			ReadBytes(bits, buff);
 
-			return BitConverter.ToInt64(buff);
+			return *(long*)buff;
 		}
 
-		public ulong ReadULong(int bits)
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public float ReadFloat()
 		{
-			Span<byte> buff = stackalloc byte[4];
-			ReadBytes(bits, buff);
+			byte* buff = stackalloc byte[4];
+			Read4Bytes(buff);
 
-			return BitConverter.ToUInt64(buff);
+			return *(float*)buff;
 		}
 
-		public float ReadFloat(int bits)
-		{
-			Span<byte> buff = stackalloc byte[4];
-			ReadBytes(bits, buff);
-
-			return BitConverter.ToSingle(buff);
-		}
-
-		public double ReadDouble(int bits)
-		{
-			Span<byte> buff = stackalloc byte[8];
-			ReadBytes(bits, buff);
-
-			return BitConverter.ToDouble(buff);
-		}
-
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public string ReadString(int length)
         {
 			Span<byte> buff = stackalloc byte[length];

@@ -52,7 +52,6 @@ namespace DemoInfo.ST
                         int classid = int.Parse(stringName); //wtf volvo?
 
                         parser.instanceBaseline[classid] = data;
-						Console.WriteLine($"Static InstanceBaseline: {classid} with length {parser.instanceBaseline[classid].Length}");
 					}
                     else if (tableName == "modelprecache")
                     {

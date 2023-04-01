@@ -47,13 +47,14 @@ namespace DemoReader
                     for (int i = 0; i < packetEntities.updatedEntries; i++)
                     {
 						//Console.WriteLine($"Stream pos: {bitStream.idx + 912}");
-						currentEntity += 1 + (int)bitStream.ReadUBitInt();
+						currentEntity += 1 + bitStream.ReadBitInt();
 
                         bool destroy = bitStream.ReadBit();
 						if (destroy)
 						{
 							//Console.WriteLine("Destroy");
-							bitStream.ReadBit();
+							//bitStream.ReadBit();
+							bitStream.Skip(1);
 							continue;
 						}
 
@@ -61,7 +62,8 @@ namespace DemoReader
                         if(shouldCreate) // If true create, if false just update
                         {
                             int serverClassID = bitStream.ReadInt(serverClassesBits);
-                            bitStream.ReadInt(10); //Entity serial. 
+							//bitStream.ReadInt(10); //Entity serial. 
+							bitStream.Skip(10);
 
                             //Console.WriteLine(serverClassID);
 							//Console.WriteLine($"Create EntityID: {currentEntity}, ServerClass: {serverClassID}");
@@ -118,51 +120,40 @@ namespace DemoReader
             return packetEntities;
         }
 
-        static int ReadFieldIndex(ref SpanBitStream bitStream, int lastIndex, bool bNewWay)
-        {
-            if (bNewWay)
-            {
-                if (bitStream.ReadBit())
-                {
-					//Console.WriteLine("		1");
-					return lastIndex + 1;
-                }
-            }
-
-			int ret;
+		static bool TryReadFieldIndex(ref SpanBitStream bitStream, bool bNewWay, out int ret)
+		{
 			if (bNewWay && bitStream.ReadBit())
-            {
-                ret = (int)bitStream.ReadUInt(3); // read 3 bits
-				//Console.WriteLine($"		2 - {ret}");
+			{
+				ret = 0;
+				return true;
 			}
-            else
-            {
-				//Console.WriteLine("		3");
-				ret = (int)bitStream.ReadUInt(7); // read 7 bits
-                switch (ret & (32 | 64))
-                {
-                    case 32:
-                        ret = (ret & ~96) | ((int)bitStream.ReadUInt(2) << 5);
-                        break;
-                    case 64:
-                        ret = (ret & ~96) | ((int)bitStream.ReadUInt(4) << 5);
-                        break;
-                    case 96:
-                        ret = (ret & ~96) | ((int)bitStream.ReadUInt(7) << 5);
-                        break;
-                }
-            }
 
-            if (ret == 0xFFF)
-            {
-                // end marker is 4095 for cs:go
-                return -1;
-            }
+			if (bNewWay && bitStream.ReadBit())
+			{
+				ret = bitStream.ReadInt(3); // read 3 bits
+			}
+			else
+			{
+				ret = bitStream.ReadInt(7); // read 7 bits
+				switch (ret & (32 | 64))
+				{
+					case 32:
+						ret = (ret & ~96) | bitStream.ReadInt(2) << 5;
+						break;
+					case 64:
+						ret = (ret & ~96) | bitStream.ReadInt(4) << 5;
+						break;
+					case 96:
+						ret = (ret & ~96) | bitStream.ReadInt(7) << 5;
+						break;
+				}
+			}
 
-            return lastIndex + 1 + ret;
-        }
+			// end marker is 4095 for cs:go
+			return ret != 0xFFF;
+		}
 
-		static void ApplyUpdate(ref Entity entity, ref SpanBitStream bitStream, in Span<SendProperty> properties)
+		unsafe static void ApplyUpdate(ref Entity entity, ref SpanBitStream bitStream, in Span<SendProperty> properties)
 		{
 			// Apply
 			bool newWay = bitStream.ReadBit();
@@ -170,107 +161,51 @@ namespace DemoReader
 
 			int idx = 0;
 			SendProperty[] entries = ArrayPool<SendProperty>.Shared.Rent(4096);
-			//var entries = new List<SendProperty>();
 
-			//No read them. 
-			//Console.WriteLine($"Reading field index - {bitStream.idx + 32}");
-			while ((index = ReadFieldIndex(ref bitStream, index, newWay)) != -1)
+			fixed (SendProperty* propertiesPtr = properties)
+			fixed (SendProperty* entriesPtr = entries)
 			{
-				//Console.WriteLine($"        {index} -  {properties[index].priority} - {properties[index].varName}");
-				entries[idx++] = properties[index];
+				while (TryReadFieldIndex(ref bitStream, newWay, out int ret))
+				{
+					index += ret + 1;
+					entriesPtr[idx++] = propertiesPtr[index];
+				}
 			}
 
-			//Console.WriteLine($"	{idx}");
-
 			//Now read the updated props
-			int i = 0;
-			foreach (ref readonly var prop in entries.AsSpan().Slice(0, idx))
+			Span<SendProperty> cutEntries = entries.AsSpan().Slice(0, idx);
+			foreach (ref readonly var prop in cutEntries)
 			{
-				//Console.WriteLine($"	{prop.type}");
-				//Console.Write($"        {i} -  {prop.type} - {prop.varName} - {bitStream.idx + 32}");
 				DecodeProp(ref entity, ref bitStream, prop, properties);
-				i++;
 			}
 
 			ArrayPool<SendProperty>.Shared.Return(entries);
 		}
-
-		static int mask = 0;
-		static int bits = 0;
-		static int old = 0;
 
 		static void DecodeProp(ref Entity entity, ref SpanBitStream bitStream, in SendProperty property, in Span<SendProperty> properties)
         {
 			switch (property.type)
 			{
 				case SendPropertyType.Int:
-					if ((mask & (1 << 0)) == 0)
-					{
-						bits = bitStream.idx;
-						old = bits;
-						//Console.WriteLine($"Int: {bits}");
-					}
-
 					var v = PropDecoder.DecodeInt(property, ref bitStream);
-
-					if ((mask & (1 << 0)) == 0)
-					{
-						bits = bitStream.idx;
-						//Console.WriteLine($"Int: {bits} - {bits - old}");
-
-						mask |= 1 << 0;
-					}
-					//Console.WriteLine($" - {v}");
 					break;
 				case SendPropertyType.Float:
-					if ((mask & (1 << 1)) == 0)
-					{
-						bits = bitStream.idx;
-						old = bits;
-						//Console.WriteLine($"Float: {bits}");
-					}
 					var v1 = PropDecoder.DecodeFloat(property, ref bitStream);
-					if ((mask & (1 << 1)) == 0)
-					{
-						bits = bitStream.idx;
-						//Console.WriteLine($"Float: {bits} - {bits - old}");
-
-						mask |= 1 << 1;
-					}
-					//Console.WriteLine($" - {v1}");
 					break;
 				case SendPropertyType.Vector:
-					if ((mask & (1 << 2)) == 0)
-					{
-						bits = bitStream.idx;
-						old = bits;
-						//Console.WriteLine($"Vector: {bits}");
-					}
 					var v2 = PropDecoder.DecodeVector(property, ref bitStream);
-					if ((mask & (1 << 2)) == 0)
-					{
-						bits = bitStream.idx;
-						//Console.WriteLine($"Vector: {bits} - {bits - old}");
-
-						mask |= 1 << 2;
-					}
-					//Console.WriteLine($" - {v2}");
 					break;
 				case SendPropertyType.VectorXY:
 					var v3 = PropDecoder.DecodeVectorXY(property, ref bitStream);
-					//Console.WriteLine($" - {v3}");
 					break;
 				case SendPropertyType.String:
 					var v4 = PropDecoder.DecodeString(property, ref bitStream);
-					//Console.WriteLine($" - {v4.Length}");
 					break;
 				case SendPropertyType.Array:
 					var v5 = PropDecoder.DecodeArray(property, ref bitStream, properties);
-					//Console.WriteLine($" - {v5.Length}");
 					break;
 				case SendPropertyType.Int64:
 					var v6 = PropDecoder.DecodeInt64(property, ref bitStream);
-					//Console.WriteLine($" - {v6}");
 					break;
 				default:
 					break;

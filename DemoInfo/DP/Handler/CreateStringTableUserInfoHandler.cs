@@ -70,15 +70,11 @@ namespace DemoInfo.DP.Handler
 
 						int pre = s.Offset;
                         entry += reader.ReadString(1024);
-						if (i == 0)
-							Console.WriteLine($"String Delta 1: {s.Offset - pre} - '{entry}'");
 					}
                     else
                     {
 						int pre = s.Offset;
                         entry = reader.ReadString(1024);
-						if (i == 0)
-							Console.WriteLine($"String Delta 2: {s.Offset - pre} - '{entry}'");
 					}
                 }
 
@@ -124,9 +120,7 @@ namespace DemoInfo.DP.Handler
                 }
                 else if (table.Name == "instancebaseline")
                 {
-					Console.WriteLine($"{i} - {s.Offset}");
 					int classid = int.Parse(entry); //wtf volvo?
-					Console.WriteLine($"ClassID: {classid}");
 					parser.instanceBaseline[classid] = userdata;
 				}
                 else if (table.Name == "modelprecache")

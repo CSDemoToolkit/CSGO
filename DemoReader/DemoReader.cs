@@ -3,6 +3,7 @@ using System.Data;
 using System.IO.MemoryMappedFiles;
 using System.Numerics;
 using System.Reflection.PortableExecutable;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -36,7 +37,7 @@ namespace DemoReader
 				i++;
 			}
 
-			//Console.WriteLine(i);
+			Console.WriteLine($"Ticks: {i}");
 			//Console.WriteLine("Ended");
 		}
 
@@ -361,6 +362,26 @@ namespace DemoReader
 			return ret;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static int ReadBitInt(this ref SpanBitStream bs)
+		{
+			int ret = bs.ReadInt(6);
+			switch (ret & (16 | 32))
+			{
+				case 16:
+					ret = (ret & 15) | (bs.ReadInt(4) << 4);
+					break;
+				case 32:
+					ret = (ret & 15) | (bs.ReadInt(8) << 4);
+					break;
+				case 48:
+					ret = (ret & 15) | (bs.ReadInt(32 - 4) << 4);
+					break;
+			}
+
+			return ret;
+		}
+
 		public static string ReadCustomString(this ref SpanBitStream bs, uint length)
 		{
 			Span<byte> bytes = stackalloc byte[(int)BitOperations.RoundUpToPowerOf2(length)];
@@ -399,6 +420,11 @@ namespace DemoReader
 		{
 			uint result = bs.ReadUnsignedVarInt();
 			return (int)((result >> 1) ^ -(result & 1));
+		}
+
+		public static bool HasFlagFast(this SendPropertyFlags flags, SendPropertyFlags check)
+		{
+			return (flags & check) == check;
 		}
 	}
 }
