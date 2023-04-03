@@ -172,8 +172,8 @@ namespace DemoReader
 				{
 					if (stream.ReadBit())
 					{
-						int index = stream.ReadInt(5);
-						int bytesToCopy = stream.ReadInt(5);
+						int index = stream.ReadBits(5);
+						int bytesToCopy = stream.ReadBits(5);
 
 						var memory = MemoryPool<byte>.Shared.Rent(1024 + bytesToCopy);
 						queue[index].Memory.Span.Slice(0, bytesToCopy).TryCopyTo(memory.Memory.Span);
@@ -365,17 +365,17 @@ namespace DemoReader
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static int ReadBitInt(this ref SpanBitStream bs)
 		{
-			int ret = bs.ReadInt(6);
+			int ret = bs.ReadBits(6);
 			switch (ret & (16 | 32))
 			{
 				case 16:
-					ret = (ret & 15) | (bs.ReadInt(4) << 4);
+					ret = (ret & 15) | (bs.ReadBits(4) << 4);
 					break;
 				case 32:
-					ret = (ret & 15) | (bs.ReadInt(8) << 4);
+					ret = (ret & 15) | (bs.ReadBits(8) << 4);
 					break;
 				case 48:
-					ret = (ret & 15) | (bs.ReadInt(32 - 4) << 4);
+					ret = (ret & 15) | (bs.ReadBits(32 - 4) << 4);
 					break;
 			}
 

@@ -1,5 +1,6 @@
 ﻿using System.Buffers;
 using System.Numerics;
+using System.Runtime.InteropServices;
 
 namespace DemoReader
 {
@@ -120,31 +121,31 @@ namespace DemoReader
             return packetEntities;
         }
 
-		static bool TryReadFieldIndex(ref SpanBitStream bitStream, bool bNewWay, out int ret)
+		static bool TryReadFieldIndex(ref SpanBitStream bitStream, out int ret, bool doPrint)
 		{
-			if (bNewWay && bitStream.ReadBit())
+			if (bitStream.ReadBit())
 			{
 				ret = 0;
 				return true;
 			}
 
-			if (bNewWay && bitStream.ReadBit())
+			if (bitStream.ReadBit())
 			{
-				ret = bitStream.ReadInt(3); // read 3 bits
+				ret = bitStream.ReadBits(3); // read 3 bits
 			}
 			else
 			{
-				ret = bitStream.ReadInt(7); // read 7 bits
+				ret = bitStream.ReadBits(7); // read 7 bits
 				switch (ret & (32 | 64))
 				{
 					case 32:
-						ret = (ret & ~96) | bitStream.ReadInt(2) << 5;
+						ret = (ret & ~96) | bitStream.ReadBits(2) << 5;
 						break;
 					case 64:
-						ret = (ret & ~96) | bitStream.ReadInt(4) << 5;
+						ret = (ret & ~96) | bitStream.ReadBits(4) << 5;
 						break;
 					case 96:
-						ret = (ret & ~96) | bitStream.ReadInt(7) << 5;
+						ret = (ret & ~96) | bitStream.ReadBits(7) << 5;
 						break;
 				}
 			}
@@ -153,41 +154,125 @@ namespace DemoReader
 			return ret != 0xFFF;
 		}
 
+		static unsafe bool TryReadFieldIndexNew(ref SpanBitStream bitStream, out int ret)
+		{
+			//Console.WriteLine($"	Pre: {bitStream.idx}");
+			//short s = bitStream.ReadShort();
+			short s;
+			bitStream.Read2Bytes(&s);
+			//Console.WriteLine($"	Post: {bitStream.idx}");
+			//Console.WriteLine($"	R: {s & 2}");
+
+			//if (bitStream.ReadBit())
+			if ((s & 1) == 1)
+			{
+				ret = 0;
+				bitStream.Skip(-15);
+				return true;
+			}
+
+			//if (bitStream.ReadBit())
+			if ((s & 2) == 2)
+			{
+				//ret = bitStream.ReadBits(3); // read 3 bits
+				ret = (s & 28) >> 2; // read 3 bits
+				bitStream.Skip(-11);
+			}
+			else
+			{
+				//ret = bitStream.ReadBits(7); // read 7 bits
+				ret = (s & 508) >> 2; // read 7 bits
+				switch (ret & (32 | 64))
+				{
+					case 32:
+						//ret = (ret & ~96) | bitStream.ReadBits(2) << 5; // Read 2 bits
+						ret = (ret & ~96) | ((s & 1536) >> 9) << 5; // Read 2 bits
+						bitStream.Skip(-5);
+						break;
+					case 64:
+						//ret = (ret & ~96) | bitStream.ReadBits(4) << 5; // Read 4 bits
+						ret = (ret & ~96) | ((s & 7680) >> 9) << 5; // Read 4 bits
+						bitStream.Skip(-3);
+						break;
+					case 96:
+						//ret = (ret & ~96) | bitStream.ReadBits(7) << 5; // Read 7 bits
+						ret = (ret & ~96) | ((s & 65024) >> 9) << 5; // Read 7 bits
+						break;
+					default:
+						bitStream.Skip(-7);
+						break;
+				}
+			}
+
+			// end marker is 4095 for cs:go
+			return ret != 0xFFF;
+		}
+
+		static SendProperty[] entries = ArrayPool<SendProperty>.Shared.Rent(4096);
+
 		unsafe static void ApplyUpdate(ref Entity entity, ref SpanBitStream bitStream, in Span<SendProperty> properties)
 		{
 			// Apply
-			bool newWay = bitStream.ReadBit();
+			bitStream.ReadBit(); // This bit was called new way. It affected TryReadFieldIndex
+								 // Seems like it is always new way so we dont support, fix later if issue
+			
 			int index = -1;
-
 			int idx = 0;
-			SendProperty[] entries = ArrayPool<SendProperty>.Shared.Rent(4096);
 
+			// Use pointers to avoid bound checking
+			// Use entries as buff array to get better cahe hit rate
 			fixed (SendProperty* propertiesPtr = properties)
 			fixed (SendProperty* entriesPtr = entries)
 			{
-				while (TryReadFieldIndex(ref bitStream, newWay, out int ret))
+				//Console.WriteLine($"New: {bitStream.idx}");
+				//bool doPrint = bitStream.idx == 3448;
+				while (TryReadFieldIndexNew(ref bitStream, out int ret))
 				{
 					index += ret + 1;
 					entriesPtr[idx++] = propertiesPtr[index];
 				}
-			}
+				//Console.WriteLine($"Total: {index}, {idx}, {bitStream.idx}, {entriesPtr[idx -1 ].type}");
 
-			//Now read the updated props
-			Span<SendProperty> cutEntries = entries.AsSpan().Slice(0, idx);
-			foreach (ref readonly var prop in cutEntries)
-			{
-				DecodeProp(ref entity, ref bitStream, prop, properties);
+				//Now read the updated props
+				for (int i = 0; i < idx; i++)
+				{
+					DecodeProp(ref entity, ref bitStream, entriesPtr[i], properties);
+				}
 			}
-
-			ArrayPool<SendProperty>.Shared.Return(entries);
 		}
+
+		static bool foundPrev = false;
+		static SendProperty prev;
+		static int types = 0;
 
 		static void DecodeProp(ref Entity entity, ref SpanBitStream bitStream, in SendProperty property, in Span<SendProperty> properties)
         {
+			/*
+			if (prev.type == property.type && prev.flags == property.flags && prev.numBits == property.numBits)
+			{
+				types++;
+			}
+			else
+			{
+				if (types >= 5)
+					Console.WriteLine($"Ent: {entity.id}, Seq: {types}, Bits: {property.numBits}, Type: {property.type}");
+
+				types = 0;
+				foundPrev = false;
+			}
+
+			if (!foundPrev)
+				prev = property;
+			*/
+
 			switch (property.type)
 			{
 				case SendPropertyType.Int:
 					var v = PropDecoder.DecodeInt(property, ref bitStream);
+					if (property.varName == "m_scoreTotal")
+					{
+						Console.WriteLine($"Score!: {v}");
+					}
 					break;
 				case SendPropertyType.Float:
 					var v1 = PropDecoder.DecodeFloat(property, ref bitStream);

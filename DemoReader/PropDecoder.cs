@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Numerics;
+using System.Reflection.PortableExecutable;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace DemoReader
@@ -97,19 +99,16 @@ namespace DemoReader
             }
         }
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float DecodeFloat(in SendProperty prop, ref SpanBitStream bitStream)
         {
-            if (TryDecodeSpecialFloat(prop, ref bitStream, out float fVal))
+            if (!TryDecodeSpecialFloat(prop, ref bitStream, out float fVal))
             {
-                return fVal;
-            }
-
-
-			//Encoding: The range between lowVal and highVal is splitted into the same steps.
-			//Read an int, fit it into the range. 
-			ulong dwInterp = bitStream.ReadUInt(prop.numBits);
-            fVal = (float)dwInterp / ((1 << prop.numBits) - 1);
-            fVal = prop.lowValue + (prop.highValue - prop.lowValue) * fVal;
+				//Encoding: The range between lowVal and highVal is splitted into the same steps.
+				//Read an int, fit it into the range. 
+				float dwInterp = bitStream.ReadUInt(prop.numBits); // NumBits
+				fVal = prop.lowValue + (prop.highValue - prop.lowValue) * (dwInterp / ((1 << prop.numBits) - 1));
+			}
 
             return fVal;
         }
@@ -175,12 +174,11 @@ namespace DemoReader
 
         public static string DecodeString(in SendProperty prop, ref SpanBitStream bitStream)
         {
-			int bytes = (int)bitStream.ReadUInt(9);
+			int bytes = bitStream.ReadInt(9);
 
 			Span<byte> buff = stackalloc byte[bytes];
 			bitStream.ReadBytes(bytes * 8, buff);
 
-			//Console.WriteLine($"\n			{bytes} - {buff.Length} - {Encoding.Default.GetString(buff)}");
 			return Encoding.Default.GetString(buff);
         }
 
@@ -197,9 +195,34 @@ namespace DemoReader
 
         private static bool TryDecodeSpecialFloat(in SendProperty prop, ref SpanBitStream bitStream, out float result)
         {
-			if (prop.flags.HasFlagFast(SendPropertyFlags.NoScale))
+			if (prop.flags.HasFlagFast(SendPropertyFlags.Coord))
+			{
+				result = ReadBitCoord(ref bitStream);
+				return true;
+			}
+			else if (prop.flags.HasFlagFast(SendPropertyFlags.CoordMp))
+			{
+				result = ReadBitCoordMP(ref bitStream, false, false);
+				return true;
+			}
+			else if (prop.flags.HasFlagFast(SendPropertyFlags.CoordMpLowPrecision))
+			{
+				result = ReadBitCoordMP(ref bitStream, false, true);
+				return true;
+			}
+			else if (prop.flags.HasFlagFast(SendPropertyFlags.CoordMpIntegral))
+			{
+				result = ReadBitCoordMP(ref bitStream, true, false);
+				return true;
+			}
+			else if (prop.flags.HasFlagFast(SendPropertyFlags.NoScale))
 			{
 				result = bitStream.ReadFloat();
+				return true;
+			}
+			else if (prop.flags.HasFlagFast(SendPropertyFlags.Normal))
+			{
+				result = ReadBitNormal(ref bitStream);
 				return true;
 			}
 			else if (prop.flags.HasFlagFast(SendPropertyFlags.CellCoord))
@@ -212,40 +235,16 @@ namespace DemoReader
 				result = ReadBitCellCoordLowPrecision(ref bitStream, prop.numBits);
 				return true;
 			}
-			else if (prop.flags.HasFlagFast(SendPropertyFlags.Coord))
-            {
-                result = ReadBitCoord(ref bitStream);
-                return true;
-            }
-            else if (prop.flags.HasFlagFast(SendPropertyFlags.CoordMp))
-            {
-                result = ReadBitCoordMP(ref bitStream, false, false);
-                return true;
-            }
-            else if (prop.flags.HasFlagFast(SendPropertyFlags.CoordMpLowPrecision))
-            {
-                result = ReadBitCoordMP(ref bitStream, false, true);
-                return true;
-            }
-            else if (prop.flags.HasFlagFast(SendPropertyFlags.CoordMpIntegral))
-            {
-                result = ReadBitCoordMP(ref bitStream, true, false);
-                return true;
-            }
-            else if (prop.flags.HasFlagFast(SendPropertyFlags.Normal))
-            {
-                result = ReadBitNormal(ref bitStream);
-                return true;
-            }
-            else if (prop.flags.HasFlagFast(SendPropertyFlags.CellCoordIntegral))
-            {
-                result = bitStream.ReadUInt(prop.numBits);
-                return true;
-            }
+			else if (prop.flags.HasFlagFast(SendPropertyFlags.CellCoordIntegral))
+			{
+				result = ReadBitCellCoord(ref bitStream, prop.numBits, false);
+				return true;
+			}
 
-            result = 0;
-            return false;
-        }
+			result = 0;
+
+			return false;
+		}
 
         private static readonly int COORD_FRACTIONAL_BITS = 5;
         private static readonly int COORD_DENOMINATOR = 1 << COORD_FRACTIONAL_BITS;
@@ -346,7 +345,7 @@ namespace DemoReader
                 }
 
                 // If there's a fraction, read it in
-                fractval = bitStream.ReadInt(isLowPrecision ? 3 : 5);
+                fractval = bitStream.ReadBits(isLowPrecision ? 3 : 5);
 
                 // Calculate the correct floating point value
                 value = *((byte*)(&intval)) + fractval * (isLowPrecision ? COORD_RESOLUTION_LOWPRECISION : COORD_RESOLUTION);
