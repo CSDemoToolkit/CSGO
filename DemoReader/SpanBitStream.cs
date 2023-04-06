@@ -66,9 +66,7 @@ namespace DemoReader
 			idx += 8 * 2;
 
 			int byteIdx = idx >> 3;
-
-			int v = *(int*)&bytePtr[byteIdx - 2] >> offset;
-			*buff = (short)v;
+			*buff = (short)(*(int*)&bytePtr[byteIdx - 2] >> offset);
 		}
 		
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -79,9 +77,7 @@ namespace DemoReader
 			idx += 8 * 4;
 
 			int byteIdx = idx >> 3;
-
-			long v = *(long*)&bytePtr[byteIdx - 4] >> offset;
-			*buff = (int)v;
+			*buff = (int)(*(long*)&bytePtr[byteIdx - 4] >> offset);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

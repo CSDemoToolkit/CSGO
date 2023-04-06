@@ -312,7 +312,8 @@ namespace DemoReader
 					ret = ReadFieldIndexNew(ref bitStream, s);
 
 					index += ret + 1;
-					entriesPtr[idx++] = propertiesPtr[index];
+					//entriesPtr[idx++] = propertiesPtr[index];
+					NativeMemory.Copy(propertiesPtr + index, entriesPtr + idx++, (nuint)(SEND_PROPERTY_SIZE));
 				}
 				//Console.WriteLine($"Total: {index}, {idx}, {bitStream.idx}, {entriesPtr[idx - 1 ].type}");
 
@@ -354,7 +355,6 @@ namespace DemoReader
 			{
 				case SendPropertyType.Int:
 					var v = PropDecoder.DecodeInt(property, ref bitStream);
-					/*
 					if (property.varName == "m_scoreTotal")
 					{
 						score = v;
@@ -366,13 +366,14 @@ namespace DemoReader
 						{
 							t = v;
 						}
+						Console.WriteLine($"CT: {t} T: {ct}, {property.flags}");
 					}
 					if (property.varName == "m_iTeamNum")
 					{
 						teamid = v;
 
-						Console.WriteLine($"CT: {t} T: {ct}");
 					}
+					/*
 					*/
 					break;
 				case SendPropertyType.Float:
@@ -386,11 +387,11 @@ namespace DemoReader
 					break;
 				case SendPropertyType.String:
 					var v4 = PropDecoder.DecodeString(property, ref bitStream);
-					/*
 					if (property.varName == "m_szTeamname")
 					{
 						team = v4;
 					}
+					/*
 					*/
 					break;
 				case SendPropertyType.Array:
