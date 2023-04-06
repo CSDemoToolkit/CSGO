@@ -67,16 +67,10 @@ namespace DemoReader
 
 			int byteIdx = idx >> 3;
 
-			if (offset == 0)
-				*buff = bytePtr[byteIdx - 2];
-
-			int remaining = 8 - offset;
-			byte last = (byte)((1 << offset) - 1);
-
-			*buff = (short)(*(ushort*)&bytePtr[byteIdx - 2] >> offset);
-			*buff |= (short)((bytePtr[byteIdx] & last) << (8 + remaining));
+			int v = *(int*)&bytePtr[byteIdx - 2] >> offset;
+			*buff = (short)v;
 		}
-
+		
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Read4Bytes(int* buff)
 		{
@@ -86,17 +80,8 @@ namespace DemoReader
 
 			int byteIdx = idx >> 3;
 
-			if (offset == 0)
-				*buff = bytePtr[byteIdx - 4];
-
-			int remaining = 8 - offset;
-			byte last = (byte)((1 << offset) - 1);
-
-			int b = bytePtr[byteIdx - 4] >> offset;
-			b |= (bytePtr[byteIdx] & last) << (24 + remaining);
-
-			*buff = (int)(*(uint*)&bytePtr[byteIdx - 4] >> offset);
-			*buff |= ((bytePtr[byteIdx] & last) << (24 + remaining));
+			long v = *(long*)&bytePtr[byteIdx - 4] >> offset;
+			*buff = (int)v;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -128,33 +113,19 @@ namespace DemoReader
 			int offset = idx % 8;
 			int byteIdx = idx >> 3;
 
-			int c = BitOperations.TrailingZeroCount(~(*(uint*)&bytePtr[byteIdx] | (uint)((1 << offset) - 1))) - offset;
-			if (c < 32 - offset)
+			int c = BitOperations.TrailingZeroCount(~(*(ulong*)&bytePtr[byteIdx] | (ulong)(1 << offset) - 1)) - offset;
+			if (c < 64 - offset)
 				return c;
 
 			int ones = c;
 			do
 			{
-				byteIdx += 4;
-				c = BitOperations.TrailingZeroCount(~*(uint*)&bytePtr[byteIdx]);
+				byteIdx += 8;
+				c = BitOperations.TrailingZeroCount(~*(ulong*)&bytePtr[byteIdx]);
 				ones += c;
-			} while (c == 32);
+			} while (c == 64);
 
 			return ones;
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void ReadBytes(int bits, byte* buff)
-		{
-			int bytes = bits / 8;
-			for (int i = 0; i < bytes; i++)
-			{
-				buff[i] = ReadByte();
-			}
-
-			int remaining = bits - bytes * 8;
-			if (remaining != 0)
-				buff[bytes] = ReadBits(remaining);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -188,28 +159,34 @@ namespace DemoReader
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public int ReadInt(int bits)
         {
-			byte* buff = stackalloc byte[4];
-			ReadBytes(bits, buff);
+			int i;
+			Read4Bytes(&i);
+			Skip(-(32 - bits));
+			i &= (1 << bits) - 1;
 
-			return *(int*)buff;
+			return i;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public uint ReadUInt(int bits)
         {
-			byte* buff = stackalloc byte[4];
-            ReadBytes(bits, buff);
+			uint i;
+			Read4Bytes((int*)&i);
+			Skip(-(32 - bits));
+			i &= (uint)((1 << bits) - 1);
 
-			return *(uint*)buff;
+			return i;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public long ReadLong(int bits)
 		{
-			byte* buff = stackalloc byte[8];
-			ReadBytes(bits, buff);
+			long i;
+			Read4Bytes((int*)&i);
+			Skip(-(32 - bits));
+			i &= (1 << bits) - 1;
 
-			return *(long*)buff;
+			return i;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -217,15 +194,6 @@ namespace DemoReader
 		{
 			float val = 0;
 			Read4Bytes((int*)&val);
-
-			return val;
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public short ReadShort()
-		{
-			short val = 0;
-			Read2Bytes(&val);
 
 			return val;
 		}
