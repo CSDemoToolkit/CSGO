@@ -4,6 +4,7 @@ using DemoInfo.DT;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using static System.Formats.Asn1.AsnWriter;
 
 namespace DemoInfo.DP
 {
@@ -46,18 +47,31 @@ namespace DemoInfo.DP
 
             //Read the field-indicies in a "new" way?
             bool newWay = reader.ReadBit();
+			int prevIndex = -1;
             int index = -1;
             var entries = new List<PropertyEntry>();
 
 			var s = (UnsafeBitStream)reader;
 			//Console.WriteLine($"Reading field index - {s.Offset}");
-            //No read them. 
-            while ((index = ReadFieldIndex(reader, index, newWay)) != -1)
+			//No read them. 
+			//Console.WriteLine($"New: {s.Offset}");
+			while ((index = ReadFieldIndex(reader, index, newWay)) != -1)
             {
                 //Console.WriteLine($"        {index} - {Props[index].Entry.Prop.Priority} - {Props[index].Entry.Prop.Name}");
                 entries.Add(Props[index]);
+				prevIndex = index;
             }
 
+			if (entries.Count == 0)
+			{
+				//Console.WriteLine($"	Total: {prevIndex}, {entries.Count}, {s.Offset}");
+				//Console.WriteLine($"Total: {prevIndex}, {entries.Count}");
+			}
+			else
+			{
+				//Console.WriteLine($"	Total: {prevIndex}, {entries.Count}, {s.Offset}, {entries[entries.Count - 1].Entry.Prop.Type}");
+				//Console.WriteLine($"Total: {prevIndex}, {entries.Count}, {entries[entries.Count - 1].Entry.Prop.Type}");
+			}
 			//Console.WriteLine($"	{entries.Count}");
 
 			//Now read the updated props
@@ -143,20 +157,31 @@ namespace DemoInfo.DP
 
         public void Decode(IBitStream stream, Entity e)
         {
-            //So here you start decoding. If you really want 
-            //to implement this yourself, GOOD LUCK. 
-            //also, be warned: They have 11 ways to read floats. 
-            //oh, btw: You may want to read the original Valve-code for this. 
-            switch (Entry.Prop.Type)
+			var v = (UnsafeBitStream)stream;
+			//Console.WriteLine($"Ent: {e.ID}, {Entry.Prop.Type} {v.Offset}");
+
+			//So here you start decoding. If you really want 
+			//to implement this yourself, GOOD LUCK. 
+			//also, be warned: They have 11 ways to read floats. 
+			//oh, btw: You may want to read the original Valve-code for this. 
+			switch (Entry.Prop.Type)
             {
                 case SendPropertyType.Int:
                 {
+					if (Entry.Prop.Name == "m_scoreTotal")
+					{
+						//Console.WriteLine($"Ent: {e.ID}, {Entry.Prop.Type} {v.Offset}");
+					}
 					var val = PropDecoder.DecodeInt(Entry.Prop, stream);
                     if (IntRecived != null)
                     {
                         IntRecived(this, new PropertyUpdateEventArgs<int>(val, e, this));
                     }
 					//Console.WriteLine($" - {val}");
+					if (Entry.Prop.Name == "m_scoreTotal")
+					{
+						//Console.WriteLine($"Score: {val}, {v.Offset}");
+					}
 				}
                     break;
                 case SendPropertyType.Int64:

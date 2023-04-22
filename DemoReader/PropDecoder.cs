@@ -348,18 +348,21 @@ namespace DemoReader
             return value;
         }
 
-        private static float ReadBitCellCoord(ref SpanBitStream bitStream, int bits, bool lowPrecision)
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private static float ReadBitCellCoord(ref SpanBitStream bitStream, int bits, bool lowPrecision)
         {
 			int intval = bitStream.ReadInt(bits);
 			int fractval = bitStream.ReadInt(lowPrecision ? COORD_FRACTIONAL_BITS_MP_LOWPRECISION : COORD_FRACTIONAL_BITS);
 			return intval + fractval * (lowPrecision ? COORD_RESOLUTION_LOWPRECISION : COORD_RESOLUTION);
         }
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static float ReadBitCellCoordLowPrecision(ref SpanBitStream bitStream, int bits)
 		{
 			return bitStream.ReadInt(bits) + bitStream.ReadInt(COORD_FRACTIONAL_BITS_MP_LOWPRECISION) * COORD_RESOLUTION_LOWPRECISION;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static float ReadBitCellCoordHighPrecision(ref SpanBitStream bitStream, int bits)
 		{
 			return bitStream.ReadInt(bits) + bitStream.ReadInt(COORD_FRACTIONAL_BITS) * COORD_RESOLUTION;
@@ -369,7 +372,8 @@ namespace DemoReader
         private static readonly int NORMAL_DENOMINATOR = (1 << NORMAL_FRACTIONAL_BITS) - 1;
         private static readonly float NORMAL_RESOLUTION = 1.0f / NORMAL_DENOMINATOR;
 
-        private static float ReadBitNormal(ref SpanBitStream bitStream)
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private static float ReadBitNormal(ref SpanBitStream bitStream)
         {
             bool isNegative = bitStream.ReadBit();
 

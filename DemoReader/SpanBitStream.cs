@@ -157,6 +157,10 @@ namespace DemoReader
         {
 			int i;
 			Read4Bytes(&i);
+
+			if (bits == 32)
+				return i;
+
 			Skip(-(32 - bits));
 			i &= (1 << bits) - 1;
 
@@ -168,6 +172,10 @@ namespace DemoReader
         {
 			uint i;
 			Read4Bytes((int*)&i);
+
+			if (bits == 32)
+				return i;
+
 			Skip(-(32 - bits));
 			i &= (uint)((1 << bits) - 1);
 

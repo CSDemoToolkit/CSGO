@@ -15,11 +15,12 @@ namespace Runner
         {
             Demo demo = new();
             DemoReader.DemoReader demoReader = new();
+
+            int useDemoInfo = int.Parse(Console.ReadLine());
+			Console.WriteLine($"Using demo {useDemoInfo}");
+
             Stopwatch sw = Stopwatch.StartNew();
-
-            int useDemoInfo = 1;
-
-            if (useDemoInfo == 0)
+			if (useDemoInfo == 1)
             {
                 demo.Analyze("Demos/demo1.dem");
             }

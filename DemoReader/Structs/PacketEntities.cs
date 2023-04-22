@@ -54,8 +54,6 @@ namespace DemoReader
                         bool destroy = bitStream.ReadBit();
 						if (destroy)
 						{
-							//Console.WriteLine("Destroy");
-							//bitStream.ReadBit();
 							bitStream.Skip(1);
 							continue;
 						}
@@ -64,22 +62,18 @@ namespace DemoReader
                         if(shouldCreate) // If true create, if false just update
                         {
                             int serverClassID = bitStream.ReadInt(serverClassesBits);
-							//bitStream.ReadInt(10); //Entity serial. 
-							bitStream.Skip(10);
+							bitStream.Skip(10); //Entity serial (Int).
 
-                            //Console.WriteLine(serverClassID);
-							//Console.WriteLine($"Create EntityID: {currentEntity}, ServerClass: {serverClassID}");
-                            ref ServerClass serverClass = ref serverClasses[serverClassID];
+							ref ServerClass serverClass = ref serverClasses[serverClassID];
 							entities[currentEntity] = new Entity(currentEntity, serverClass);
 
 							// Apply update with instance baseline to entity
 							var baselineBitStream = new SpanBitStream(instanceBaselines[serverClassID].AsSpan());
-							//Console.WriteLine($"Baseline length: {instanceBaselines[serverClassID].Count}");
 							ApplyUpdate(ref entities[currentEntity], ref baselineBitStream, serverClass.properties);
-                        }
+						}
 
 						ref Entity ent = ref entities[currentEntity];
-						//Console.WriteLine($"Update EntityID: {ent.id}, ServerClass: {ent.serverClassID}");
+						//Console.WriteLine($"EntityID: {ent.id}, ServerClass: {ent.serverClassID}");
 						ApplyUpdate(ref ent, ref bitStream, serverClasses[ent.serverClassID].properties);
 					}
 
@@ -122,7 +116,7 @@ namespace DemoReader
             return packetEntities;
         }
 
-		static bool TryReadFieldIndex(ref SpanBitStream bitStream, out int ret, bool doPrint)
+		static bool TryReadFieldIndex(ref SpanBitStream bitStream, out int ret)
 		{
 			if (bitStream.ReadBit())
 			{
@@ -257,7 +251,8 @@ namespace DemoReader
 			return ret != 0xFFF;
 		}
 
-		static SendProperty[] entries = ArrayPool<SendProperty>.Shared.Rent(4096);
+		static SendProperty[] entries = new SendProperty[4096];
+		static readonly int SEND_PROPERTY_SIZE = sizeof(SendProperty);
 
 		unsafe static void ApplyUpdate(ref Entity entity, ref SpanBitStream bitStream, in Span<SendProperty> properties)
 		{
@@ -268,8 +263,6 @@ namespace DemoReader
 			int index = -1;
 			int idx = 0;
 
-			int SEND_PROPERTY_SIZE = sizeof(SendProperty);
-
 			// Use pointers to avoid bound checking
 			// Use entries as buff array to get better cahe hit rate
 			fixed (SendProperty* propertiesPtr = properties)
@@ -277,17 +270,17 @@ namespace DemoReader
 			//fixed (byte* lookupPtr = lookup)
 			//fixed (int* maskLookupPtr = maskLookup)
 			{
-				//Console.WriteLine($"New: {bitStream.idx}");
+				//Console.WriteLine($"New: {bitStream.idx + 32}");
 				//bool doPrint = bitStream.idx == 3448;
 				/*
-				while (TryReadFieldIndexNew(ref bitStream, out int ret))
+				while (TryReadFieldIndex(ref bitStream, out int ret))
 				{
 					index += ret + 1;
 					entriesPtr[idx++] = propertiesPtr[index];
 				}
-				*/
-				//Console.WriteLine($"Total: {index}, {idx}, {bitStream.idx}, {entriesPtr[idx - 1 ].type}");
+				//Console.WriteLine($"Total: {index}, {idx}, {bitStream.idx}, {entriesPtr[idx - 1].type}");
 				//bool doRun = true;
+				*/
 				int ret;
 				short s;
 				while (true)
@@ -306,74 +299,51 @@ namespace DemoReader
 					if (s == -4)
 						break;
 
-					//if (!TryReadFieldIndexNew(ref bitStream, out int ret))
-					//	break;
-
 					ret = ReadFieldIndexNew(ref bitStream, s);
 
 					index += ret + 1;
-					//entriesPtr[idx++] = propertiesPtr[index];
 					NativeMemory.Copy(propertiesPtr + index, entriesPtr + idx++, (nuint)(SEND_PROPERTY_SIZE));
 				}
-				//Console.WriteLine($"Total: {index}, {idx}, {bitStream.idx}, {entriesPtr[idx - 1 ].type}");
+				/*
+				*/
+				//Console.WriteLine($"	Total: {index}, {idx}, {bitStream.idx + 32}, {entriesPtr[idx - 1].type}");
+				//Console.WriteLine($"Total: {index}, {idx}, {entriesPtr[idx - 1].type}");
 
 				//Now read the updated props
 				for (int i = 0; i < idx; i++)
 				{
-					DecodeProp(ref bitStream, entriesPtr[i], properties);
+					DecodeProp(ref entity, ref bitStream, entriesPtr[i], properties);
 				}
 			}
 		}
 
-		static string team;
-		static int teamid;
-		static int score;
 		static int t;
 		static int ct;
 
-		static void DecodeProp(ref SpanBitStream bitStream, in SendProperty property, in Span<SendProperty> properties)
+		static void DecodeProp(ref Entity entity, ref SpanBitStream bitStream, in SendProperty property, in Span<SendProperty> properties)
         {
-			/*
-			if (prev.type == property.type && prev.flags == property.flags && prev.numBits == property.numBits)
-			{
-				types++;
-			}
-			else
-			{
-				if (types >= 5)
-					Console.WriteLine($"Ent: {entity.id}, Seq: {types}, Bits: {property.numBits}, Type: {property.type}");
-
-				types = 0;
-				foundPrev = false;
-			}
-
-			if (!foundPrev)
-				prev = property;
-			*/
-
 			switch (property.type)
 			{
 				case SendPropertyType.Int:
 					var v = PropDecoder.DecodeInt(property, ref bitStream);
 					if (property.varName == "m_scoreTotal")
 					{
-						score = v;
-						if (teamid == 2 && ct != v)
-						{
-							ct = v;
-						}
-						else if (teamid == 3 && t != v)
+						if (entity.id == 67 && v != t)
 						{
 							t = v;
+							Console.WriteLine($"CT: {ct}, T: {t}");
 						}
-						Console.WriteLine($"CT: {t} T: {ct}, {property.flags}");
-					}
-					if (property.varName == "m_iTeamNum")
-					{
-						teamid = v;
-
+						else if (entity.id == 68 && v != ct)
+						{
+							ct = v;
+							Console.WriteLine($"CT: {ct}, T: {t}");
+						}
 					}
 					/*
+					if (property.varName == "m_scoreTotal")
+					{
+						Console.WriteLine($"	Score: {v}, {bitStream.idx + 32}");
+					}
 					*/
 					break;
 				case SendPropertyType.Float:
@@ -387,12 +357,6 @@ namespace DemoReader
 					break;
 				case SendPropertyType.String:
 					var v4 = PropDecoder.DecodeString(property, ref bitStream);
-					if (property.varName == "m_szTeamname")
-					{
-						team = v4;
-					}
-					/*
-					*/
 					break;
 				case SendPropertyType.Array:
 					var v5 = PropDecoder.DecodeArray(property, ref bitStream, properties);

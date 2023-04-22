@@ -70,7 +70,7 @@ namespace DemoInfo.DT
                 FlattenDataTable(i);
             }
 
-			Console.WriteLine();
+			//Console.WriteLine();
 
 			for (int i = 0; i < DataTables[ServerClasses[40].DataTableID].Properties.Count; i++)
 			{

@@ -1,4 +1,5 @@
-﻿using DemoInfo.DT;
+﻿using DemoInfo.BitStreamImpl;
+using DemoInfo.DT;
 using System;
 using System.Collections.Generic;
 
@@ -16,7 +17,10 @@ namespace DemoInfo.DP.Handler
         {
             int currentEntity = -1;
 
-            for (int i = 0; i < packetEntities.UpdatedEntries; i++)
+			var r = (UnsafeBitStream)reader;
+
+			//Console.WriteLine("------ PACKET ------");
+			for (int i = 0; i < packetEntities.UpdatedEntries; i++)
             {
                 //First read which entity is updated
                 currentEntity += 1 + (int)reader.ReadUBitInt();
@@ -29,21 +33,27 @@ namespace DemoInfo.DP.Handler
                     // enter flag
                     if (reader.ReadBit())
                     {
-                        //Console.WriteLine($"{currentEntity} - Create");
-                        //create it
-                        var e = ReadEnterPVS(reader, currentEntity, parser);
+						//Console.WriteLine($"{currentEntity} - Create");
+						//create it
+						var e = ReadEnterPVS(reader, currentEntity, parser);
+						//Console.WriteLine($"Create EntityID: {currentEntity}, ServerClass: {e.ServerClass.ClassID}");
 
                         parser.Entities[currentEntity] = e;
 
+						//Console.WriteLine($"EntityID: {e.ID}, ServerClass: {e.ServerClass.ClassID}");
                         e.ApplyUpdate(reader);
-                    }
+						//Console.WriteLine($"	Idx> {r.Offset}");
+					}
                     else
                     {
                         //Console.WriteLine($"{currentEntity} - Update");
                         // preserve / update
                         Entity e = parser.Entities[currentEntity];
-                        e.ApplyUpdate(reader);
-                    }
+						//Console.WriteLine($"Update EntityID: {e.ID}, ServerClass: {e.ServerClass.ClassID}");
+						//Console.WriteLine($"EntityID: {e.ID}, ServerClass: {e.ServerClass.ClassID}");
+						e.ApplyUpdate(reader);
+						//Console.WriteLine($"	Idx> {r.Offset}");
+					}
                 }
                 else
                 {
@@ -95,6 +105,7 @@ namespace DemoInfo.DP.Handler
 
 			//Console.WriteLine($"Baseline length: {parser.instanceBaseline[serverClassID].Length}");
 
+			/*
 			object[] fastBaseline;
             if (parser.PreprocessedBaselines.TryGetValue(serverClassID, out fastBaseline))
             {
@@ -102,6 +113,7 @@ namespace DemoInfo.DP.Handler
             }
             else
             {
+			*/
                 var preprocessedBaseline = new List<object>();
                 if (parser.instanceBaseline.ContainsKey(serverClassID))
                 {
@@ -112,8 +124,8 @@ namespace DemoInfo.DP.Handler
                     }
                 }
 
-                parser.PreprocessedBaselines.Add(serverClassID, preprocessedBaseline.ToArray());
-            }
+                //parser.PreprocessedBaselines.Add(serverClassID, preprocessedBaseline.ToArray());
+            //}
 
             return newEntity;
         }
