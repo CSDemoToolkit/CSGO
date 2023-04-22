@@ -38,7 +38,6 @@ namespace DemoReader
 			}
 
 			Console.WriteLine($"Ticks: {i}");
-			//Console.WriteLine("Ended");
 		}
 
 		void ReadHeader(Stream stream)
@@ -181,8 +180,7 @@ namespace DemoReader
 						int pre = stream.idx;
 						int l = stream.ReadUntill(0, 10, memory.Memory.Span.Slice(bytesToCopy)); // 10 might not be needed?
 						memory.Memory.Span.Slice(l).Fill(0);
-						//if (i == 0)
-						//	Console.WriteLine($"String Delta 2: {stream.idx - pre} - '{Encoding.ASCII.GetString(memory.Memory.Span)}'");
+
 						queue.PushBack(memory);
 					}
 					else
@@ -192,8 +190,6 @@ namespace DemoReader
 						int pre = stream.idx;
 						int l = stream.ReadUntill(0, 10, memory.Memory.Span); // 10 might not be needed?
 						memory.Memory.Span.Slice(l).Fill(0);
-						//if (i == 0)
-						//	Console.WriteLine($"String Delta 2: {stream.idx - pre} - '{Encoding.ASCII.GetString(memory.Memory.Span)}'");
 
 						queue.PushBack(memory);
 					}
@@ -221,9 +217,7 @@ namespace DemoReader
 				}
 				else if (table.name == "instancebaseline")
 				{
-					//Console.WriteLine($"{i} - {stream.idx}");
 					int classid = int.Parse(Encoding.UTF8.GetString(queue.Back().Memory.Span)); // TODO: My intuition tells me this can be optimized, but i am sick of this code RN
-					//Console.WriteLine($"ClassID: {classid}");
 					instanceBaselines[classid] = new ArraySegment<byte>(userdata.Slice(0, (int)userDataLength / 8).ToArray());
 				}
 				else if (table.name == "modelprecache")
@@ -265,18 +259,6 @@ namespace DemoReader
 			for (int i = 0; i < serverClassCount; i++)
 			{
 				classes[i] = ServerClass.Parse(ref stream, dataTables);
-			}
-
-			for (int a = 0; a < dataTables[classes[40].dataTableID].properties.Count; a++)
-			{
-				var prop = dataTables[classes[40].dataTableID].properties[a];
-				//Console.WriteLine($"{a}: {prop.varName}");
-			}
-
-			for (int a = 0; a < classes[40].properties.Length; a++)
-			{
-				var prop = classes[40].properties[a];
-				//Console.WriteLine($"{a}: {prop.varName}");
 			}
 
 			return classes;

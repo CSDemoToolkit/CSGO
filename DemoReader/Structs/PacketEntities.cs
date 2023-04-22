@@ -339,12 +339,6 @@ namespace DemoReader
 							Console.WriteLine($"CT: {ct}, T: {t}");
 						}
 					}
-					/*
-					if (property.varName == "m_scoreTotal")
-					{
-						Console.WriteLine($"	Score: {v}, {bitStream.idx + 32}");
-					}
-					*/
 					break;
 				case SendPropertyType.Float:
 					var v1 = PropDecoder.DecodeFloat(property, ref bitStream);

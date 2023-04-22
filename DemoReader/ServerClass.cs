@@ -19,79 +19,7 @@ namespace DemoReader
             serverClass.dtName = stream.ReadDataTableString();
             serverClass.dataTableID = dataTables.FindIndex(a => a.netTableName == serverClass.dtName);
 
-			/*
 			//TODO: This can probably be further made readable but i cannot be bothered now
-			List<SendProperty> pri = new List<SendProperty>();
-			List<SendProperty> sec = new List<SendProperty>();
-
-			GetProperties(dataTables[serverClass.dataTableID], dataTables, pri, sec, false);
-
-			pri.AddRange(sec);
-			*/
-
-			/*
-			var priorities = pri.Select(x => x.priority).Append(64).Distinct().Order();
-			int idx = 0;
-			foreach (var priority in priorities)
-			{
-				for (int i = idx; i < pri.Count; i++)
-				{
-					if (pri[i].priority == priority || (priority == 64 && pri[i].flags.HasFlag(SendPropertyFlags.ChangesOften)))
-					{
-						var tmp = pri[i];
-						pri[i] = pri[idx];
-						pri[idx] = tmp;
-
-						idx++;
-					}
-				}
-			}
-			*/
-
-			/*
-			List<int> priorities = new List<int>();
-			priorities.Add(64);
-			priorities.AddRange(pri.Select(a => a.priority).Distinct());
-			priorities.Sort();
-
-			int start = 0;
-			for (int priorityIndex = 0; priorityIndex < priorities.Count; priorityIndex++)
-			{
-				int priority = priorities[priorityIndex];
-
-				while (true)
-				{
-					int currentProp = start;
-
-					while (currentProp < pri.Count)
-					{
-						SendProperty prop = pri[currentProp];
-
-						if (prop.priority == priority || (priority == 64 && prop.flags.HasFlag(SendPropertyFlags.ChangesOften)))
-						{
-							if (start != currentProp)
-							{
-								SendProperty temp = pri[start];
-								pri[start] = pri[currentProp];
-								pri[currentProp] = temp;
-							}
-
-							start++;
-							break;
-						}
-
-						currentProp++;
-					}
-
-					if (currentProp == pri.Count)
-					{
-						break;
-					}
-				}
-			}
-			*/
-
-			//serverClass.properties = pri.ToArray();
 
 			var excludes = new List<SendProperty>();
 			GetExcludes(dataTables[serverClass.dataTableID], dataTables, excludes, true);
@@ -99,8 +27,6 @@ namespace DemoReader
 			var flattendProps = new List<SendProperty>();
 			GatherProps(dataTables[serverClass.dataTableID], flattendProps, excludes, dataTables);
 
-			/*
-			*/
 
 			var priorities = flattendProps.Select(x => x.priority).Append(64).Distinct().Order();
 			int idx = 0;
@@ -120,55 +46,8 @@ namespace DemoReader
 			}
 
 			serverClass.properties = flattendProps.ToArray();
-
-			/*
-			GetProperties(dataTables[serverClass.dataTableID], dataTables, pri, sec, false);
-
-			//serverClass.properties.AddRange(pri);
-			//serverClass.properties.AddRange(sec);
-			//serverClass.properties.Sort((x, y) => x.priority.CompareTo(y.priority));
-
-			pri.AddRange(sec);
-			serverClass.properties.AddRange(pri.OrderBy(x => x.priority));
-			*/
-
 			return serverClass;
         }
-
-		static void GetProperties(in SendTable table, List<SendTable> dataTables, List<SendProperty> pri, List<SendProperty> sec, bool isPri, int indent = 0)
-		{
-			var excludes = new List<SendProperty>();
-			GetExcludes(table, dataTables, excludes, true);
-
-			for (int i = 0; i < table.properties.Count; i++)
-			{
-				var prop = table.properties[i];
-
-				// Ignore prop if element of array of excluded
-				if (prop.flags.HasFlag(SendPropertyFlags.Exclude | SendPropertyFlags.InsideArray) || IsPropExcluded(table, prop, excludes))
-					continue;
-
-				switch (prop.type)
-				{
-					case SendPropertyType.DataTable:
-						GetProperties(dataTables.Find(x => x.netTableName == prop.dtName), dataTables, pri, sec, !prop.flags.HasFlag(SendPropertyFlags.Collapsible), indent + 1); // Instead of returning ref to another property return the actual property
-						break;
-					default:
-						if (prop.type == SendPropertyType.Array)
-							prop.arrayElementProp = new(table.properties[i - 1]);
-
-						if (isPri)
-						{
-							pri.Add(prop);
-						}
-						else
-						{
-							sec.Add(prop);
-						}
-						break;
-				}
-			}
-		}
 
 		static IEnumerable<SendProperty> GetExcludes(in SendTable table, List<SendTable> dataTables, List<SendProperty> excludes, bool collectBaseClasses)
 		{
@@ -204,12 +83,10 @@ namespace DemoReader
 
 		static void GatherProps_IterateProps(SendTable table, List<SendProperty> flattenedProps, List<SendProperty> aflattenedProps, IEnumerable<SendProperty> excludes, List<SendTable> dataTables)
 		{
-			//Console.WriteLine(table.Name);
 			for (int i = 0; i < table.properties.Count; i++)
 			{
 
 				SendProperty property = table.properties[i];
-				//Console.WriteLine($"    Type: {property.Type}:{property.Name} - {property.Flags.HasFlag(SendPropertyFlags.Exclude)} - {property.DataTableName}");
 
 				if (property.flags.HasFlag(SendPropertyFlags.InsideArray) || property.flags.HasFlag(SendPropertyFlags.Exclude) ||
 					IsPropExcluded(table, property, excludes))
