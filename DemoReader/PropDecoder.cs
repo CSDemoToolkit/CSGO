@@ -182,9 +182,9 @@ namespace DemoReader
 			return Encoding.Default.GetString(buff);
         }
 
-        public static Vector2 DecodeVectorXY(in SendProperty prop, ref SpanBitStream bitStream)
+        public static Vector3 DecodeVectorXY(in SendProperty prop, ref SpanBitStream bitStream)
         {
-			Vector2 v = new Vector2();
+			Vector3 v = new Vector3();
             v.X = DecodeFloat(prop, ref bitStream);
             v.Y = DecodeFloat(prop, ref bitStream);
 

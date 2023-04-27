@@ -1162,9 +1162,8 @@ namespace DemoInfo
 
             if (playerEntity.Props.All(a => a.Entry.PropertyName != "m_hMyWeapons.000"))
             {
-                weaponPrefix = "bcc_nonlocaldata.m_hMyWeapons.";
+				weaponPrefix = "bcc_nonlocaldata.m_hMyWeapons.";
             }
-
 
             int[] cache = new int[MAXWEAPONS];
 

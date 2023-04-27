@@ -11,18 +11,20 @@ namespace DemoReader
 {
 	public class DemoReader
 	{
-		public List<SendTable> DataTables = new List<SendTable>();
-		public List<StringTable> StringTables = new List<StringTable>();
-		public ServerClass[] ServerClasses;
-		public List<EventDescriptor> EventDescriptors = new List<EventDescriptor>();
+		List<SendTable> DataTables = new List<SendTable>();
+		List<StringTable> StringTables = new List<StringTable>();
+		ServerClass[] ServerClasses;
+		List<EventDescriptor> EventDescriptors = new List<EventDescriptor>();
 
-		public ArraySegment<byte>[] instanceBaselines = new ArraySegment<byte>[300]; // TODO: Replace 300
-		public string[] modelPrecaches = new string[847];
+		ArraySegment<byte>[] instanceBaselines = new ArraySegment<byte>[300]; // TODO: Replace 300
+		string[] modelPrecaches = new string[847];
 
-		public PlayerInfo[] players = new PlayerInfo[64];
-		public Entity[] entities = new Entity[1024];
+		PlayerInfo[] players = new PlayerInfo[64];
+		Entity[] entities = new Entity[1024];
 
-		public int ServerClassesBits;
+		int ServerClassesBits;
+
+		public DemoEventHandler eventHandler = new DemoEventHandler();
 
 		public void Analyze(string path)
 		{
@@ -109,7 +111,7 @@ namespace DemoReader
 				switch (cmd)
 				{
 					case SVCMessages.svc_PacketEntities:
-						PacketEntities.Parse(cmdStream, ServerClasses, entities, instanceBaselines, ServerClassesBits);
+						PacketEntities.Parse(cmdStream, ServerClasses, entities, instanceBaselines, ServerClassesBits, eventHandler);
 						break;
 					case SVCMessages.svc_CreateStringTable:
 					{
