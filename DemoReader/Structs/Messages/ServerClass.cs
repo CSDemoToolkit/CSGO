@@ -11,6 +11,8 @@ namespace DemoReader
         public string dtName;
 		public SendProperty[] properties;
 
+		public Guid id;
+
 		public static ServerClass Parse(ref SpanStream<byte> stream, List<SendTable> dataTables)
         {
             var serverClass = new ServerClass();
@@ -18,6 +20,7 @@ namespace DemoReader
             serverClass.name = stream.ReadDataTableString();
             serverClass.dtName = stream.ReadDataTableString();
             serverClass.dataTableID = dataTables.FindIndex(a => a.netTableName == serverClass.dtName);
+			serverClass.id = Guid.NewGuid();
 
 			//TODO: This can probably be further made readable but i cannot be bothered now
 

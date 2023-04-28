@@ -51,9 +51,9 @@ namespace Runner
 					break;
 			}
 
-			Console.WriteLine($"CT: {ct}, T: {t}");
-			//Console.WriteLine(demoReader.eventHandler.bombsites[0].BoundingBox);
-			//Console.WriteLine($"Player 0: {demoReader.eventHandler.players[0].Position}");
+			//Console.WriteLine($"CT: {ct}, T: {t}");
+			//Console.WriteLine($"	{demoReader.eventHandler.bombsites[0].BoundingBox}");
+			//Console.WriteLine($"	Player 0: {demoReader.eventHandler.players[0].Position}");
 		}
 	}
 }

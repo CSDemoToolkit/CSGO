@@ -11,6 +11,8 @@
 		public float highValue;
 		public int numBits;
 
+		public Guid id;
+
 		public SendPropertyArrayProp(SendProperty p)
 		{
 			type = p.type;
@@ -21,6 +23,7 @@
 			lowValue = p.lowValue;
 			highValue = p.highValue;
 			numBits = p.numBits;
+			id = p.id;
 		}
 
 		public SendProperty ToSendProperty()
@@ -34,7 +37,8 @@
 				dtName = dtName,
 				lowValue = lowValue,
 				highValue = highValue,
-				numBits = numBits
+				numBits = numBits,
+				id = id
 			};
 		}
 	}
@@ -51,11 +55,14 @@
         public float highValue;
         public int numBits;
 
+		public Guid id;
+
 		public SendPropertyArrayProp arrayElementProp;
 
         public static SendProperty Parse(SpanStream<byte> stream)
         {
             var prop = new SendProperty();
+			prop.id = Guid.NewGuid();
 
             while (!stream.IsEnd)
             {

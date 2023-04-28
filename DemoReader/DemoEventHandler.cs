@@ -78,6 +78,12 @@ namespace DemoReader
 			infernoEventHandler = new InfernoEventHandler(this);
 		}
 
+		public void Init(Span<ServerClass> serverClasses)
+		{
+			scoreEventHandler.Init(serverClasses);
+			playerEventHandler.Init(serverClasses);
+		}
+
 		public void Execute(ref ServerClass serverClass, ref Entity entity, in SendProperty property, int v)
 		{
 			scoreEventHandler.Execute(ref entity, property, v);

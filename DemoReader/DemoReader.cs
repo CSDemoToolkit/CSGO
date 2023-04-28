@@ -89,6 +89,8 @@ namespace DemoReader
 			ServerClasses = GetServerClasses(ref spanStream, DataTables);
 			ServerClassesBits = BitOperations.Log2(BitOperations.RoundUpToPowerOf2((uint)ServerClasses.Length));
 
+			eventHandler.Init(ServerClasses);
+
 			return true;
 		}
 
