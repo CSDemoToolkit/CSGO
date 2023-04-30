@@ -7,16 +7,25 @@
 
 		DemoEventHandler eventHandler;
 
+		Guid INFERNO_ID;
+		Guid OWNER_ENTITY_ID;
+
 		public InfernoEventHandler(DemoEventHandler eventHandler)
 		{
 			this.eventHandler = eventHandler;
 		}
 
+		public void Init(Span<ServerClass> serverClasses)
+		{
+			INFERNO_ID = serverClasses.FindServerClass("CInferno").id;
+			OWNER_ENTITY_ID = serverClasses.FindProperty("CInferno", "m_hOwnerEntity").id;
+		}
+
 		public void Execute(ref ServerClass serverClass, ref Entity entity, in SendProperty property, int v)
 		{
-			if (serverClass.name == "CInferno")
+			if (serverClass.id == INFERNO_ID)
 			{
-				if (property.varName == "m_hOwnerEntity")
+				if (property.id == OWNER_ENTITY_ID)
 				{
 					int playerID = v & INDEX_MASK;
 					if (!eventHandler.infernos.TryAdd(entity.id, new Inferno { Owner = playerID }))
@@ -29,8 +38,7 @@
 
 		public void Destroy(ref ServerClass serverClass, ref Entity entity)
 		{
-
-			if (serverClass.name == "CInferno")
+			if (serverClass.id == INFERNO_ID)
 			{
 				eventHandler.infernos.Remove(entity.id);
 			}

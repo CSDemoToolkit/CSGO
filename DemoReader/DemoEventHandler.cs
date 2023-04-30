@@ -36,7 +36,7 @@ namespace DemoReader
 
 	public struct Bombsite
 	{
-		public int BombsiteEnt;
+		public Guid BombsiteEnt;
 
 		public Vector2 Center;
 		public Vector4 BoundingBox;
@@ -82,6 +82,9 @@ namespace DemoReader
 		{
 			scoreEventHandler.Init(serverClasses);
 			playerEventHandler.Init(serverClasses);
+			gameRulesEventHandler.Init(serverClasses);
+			bombsiteEventHandler.Init(serverClasses);
+			infernoEventHandler.Init(serverClasses);
 		}
 
 		public void Execute(ref ServerClass serverClass, ref Entity entity, in SendProperty property, int v)
