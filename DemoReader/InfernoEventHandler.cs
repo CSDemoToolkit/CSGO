@@ -21,7 +21,7 @@
 			OWNER_ENTITY_ID = serverClasses.FindProperty("CInferno", "m_hOwnerEntity").id;
 		}
 
-		public void Execute(ref ServerClass serverClass, ref Entity entity, in SendProperty property, int v)
+		public void Execute(ref ServerClass serverClass, ref Entity entity, ref SendProperty property, int v)
 		{
 			if (serverClass.id == INFERNO_ID)
 			{
