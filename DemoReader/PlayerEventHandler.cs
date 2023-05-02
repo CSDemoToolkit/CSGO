@@ -34,6 +34,12 @@ namespace DemoReader
 		Guid PLAYER_VELOCITY_Y_ID;
 		Guid PLAYER_VELOCITY_Z_ID;
 
+		Guid PLAYER_WEAPON_PARENT_ID;
+		Guid PLAYER_WEAPON_AMMO_PARENT_ID;
+		Guid[] PLAYER_WEAPON_NUM_ID = new Guid[64];
+		Guid[] PLAYER_WEAPON_AMMO_NUM_ID = new Guid[32];
+		Guid PLAYER_ACTIVE_WEAPON_ID;
+
 		public PlayerEventHandler(DemoEventHandler eventHandler, ScoreEventHandler scoreEventHandler)
 		{
 			this.eventHandler = eventHandler;
@@ -64,9 +70,21 @@ namespace DemoReader
 			PLAYER_VELOCITY_X_ID = serverClasses.FindProperty("CCSPlayer", "m_vecVelocity[0]").id;
 			PLAYER_VELOCITY_Y_ID = serverClasses.FindProperty("CCSPlayer", "m_vecVelocity[1]").id;
 			PLAYER_VELOCITY_Z_ID = serverClasses.FindProperty("CCSPlayer", "m_vecVelocity[2]").id;
+
+			PLAYER_WEAPON_PARENT_ID = serverClasses.FindParentProperty("CCSPlayer", "m_hMyWeapons").parent;
+			for (int i = 0; i < 64; i++)
+			{
+				PLAYER_WEAPON_NUM_ID[i] = serverClasses.FindProperty("CCSPlayer", i.ToString().PadLeft(3, '0'), "m_hMyWeapons").id;
+			}
+			PLAYER_ACTIVE_WEAPON_ID = serverClasses.FindProperty("CCSPlayer", "m_hActiveWeapon").id;
+			PLAYER_WEAPON_AMMO_PARENT_ID = serverClasses.FindParentProperty("CCSPlayer", "m_iAmmo").parent;
+			for (int i = 0; i < 32; i++) // No idea why 32, it was that in demo info
+			{
+				PLAYER_WEAPON_AMMO_NUM_ID[i] = serverClasses.FindProperty("CCSPlayer", i.ToString().PadLeft(3, '0'), "m_iAmmo").id;
+			}
 		}
 
-		public void Execute(ref ServerClass serverClass, ref Entity entity, in SendProperty property, int v)
+		public unsafe void Execute(ref ServerClass serverClass, ref Entity entity, ref SendProperty property, int v)
 		{
 			if (serverClass.id == IS_PLAYER_ID)
 			{
@@ -128,10 +146,39 @@ namespace DemoReader
 						player.Team = Team.Spectator;
 					}
 				}
+				else if (property.parent == PLAYER_WEAPON_PARENT_ID)
+				{
+					for (int i = 0; i < 64; i++)
+					{
+						if (PLAYER_WEAPON_NUM_ID[i] != property.id)
+							continue;
+
+						int index = v & INDEX_MASK;
+						player.Weapons[i] = index != INDEX_MASK ? index : 0;
+
+						break;
+					}
+				}
+				else if (property.id == PLAYER_ACTIVE_WEAPON_ID)
+				{
+					player.ActiveWeapon = v & INDEX_MASK;
+				}
+				else if (property.parent == PLAYER_WEAPON_AMMO_PARENT_ID)
+				{
+					for (int i = 0; i < 32; i++)
+					{
+						if (PLAYER_WEAPON_AMMO_NUM_ID[i] != property.id)
+							continue;
+
+						player.WeaponAmmo[i] = v;
+
+						break;
+					}
+				}
 			}
 		}
 
-		public void Execute(ref ServerClass serverClass, ref Entity entity, in SendProperty property, float v)
+		public void Execute(ref ServerClass serverClass, ref Entity entity, ref SendProperty property, float v)
 		{
 			if (serverClass.id == IS_PLAYER_ID)
 			{
@@ -169,7 +216,7 @@ namespace DemoReader
 			}
 		}
 
-		public void Execute(ref ServerClass serverClass, ref Entity entity, in SendProperty property, Vector3 v)
+		public void Execute(ref ServerClass serverClass, ref Entity entity, ref SendProperty property, Vector3 v)
 		{
 			if (serverClass.id == IS_PLAYER_ID)
 			{

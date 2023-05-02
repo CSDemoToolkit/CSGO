@@ -4,6 +4,7 @@
 	{
 		public SendPropertyType type;
 		public string varName;
+		public string parentName;
 		public SendPropertyFlags flags;
 		public int priority;
 		public string dtName;
@@ -11,12 +12,14 @@
 		public float highValue;
 		public int numBits;
 
+		public Guid parent;
 		public Guid id;
 
 		public SendPropertyArrayProp(SendProperty p)
 		{
 			type = p.type;
 			varName = p.varName;
+			parentName = p.parentName;
 			flags = p.flags;
 			priority = p.priority;
 			dtName = p.dtName;
@@ -24,6 +27,7 @@
 			highValue = p.highValue;
 			numBits = p.numBits;
 			id = p.id;
+			parent = p.parent;
 		}
 
 		public SendProperty ToSendProperty()
@@ -47,6 +51,7 @@
     {
         public SendPropertyType type;
         public string varName;
+        public string parentName;
         public SendPropertyFlags flags;
         public int priority;
         public string dtName;
@@ -55,6 +60,7 @@
         public float highValue;
         public int numBits;
 
+		public Guid parent;
 		public Guid id;
 
 		public SendPropertyArrayProp arrayElementProp;

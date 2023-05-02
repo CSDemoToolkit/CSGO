@@ -12,7 +12,7 @@
 				}
 			}
 
-			throw new Exception("Server class or property not found");
+			throw new Exception("Server class not found");
 		}
 
 		public static ref SendProperty FindProperty(this Span<ServerClass> span, string serverClass, string property)
@@ -26,7 +26,36 @@
 				}
 			}
 
-			throw new Exception("Server class or property not found");
+			throw new Exception("Property not found");
+		}
+
+		public static ref SendProperty FindProperty(this Span<ServerClass> span, string serverClass, string property, string parent)
+		{
+			ref ServerClass sc = ref span.FindServerClass(serverClass);
+			for (int i = 0; i < sc.properties.Length; i++)
+			{
+				if (sc.properties[i].parentName == parent && sc.properties[i].varName == property)
+				{
+					return ref sc.properties[i];
+				}
+			}
+
+			throw new Exception("Property not found");
+		}
+
+		public static ref SendProperty FindParentProperty(this Span<ServerClass> span, string serverClass, string property)
+		{
+			ref ServerClass sc = ref span.FindServerClass(serverClass);
+			for (int i = 0; i < sc.properties.Length; i++)
+			{
+				//Console.WriteLine($"{sc.properties[i].parentName} - {sc.properties[i].parent}");
+				if (sc.properties[i].parentName == property)
+				{
+					return ref sc.properties[i];
+				}
+			}
+
+			throw new Exception("Property not found");
 		}
 	}
 
@@ -58,7 +87,7 @@
 			CLAN_NAME_ID = serverClasses.FindProperty("CCSTeam", "m_szClanTeamname").id;
 		}
 
-		public void Execute(ref Entity entity, in SendProperty property, int v)
+		public void Execute(ref Entity entity, ref SendProperty property, int v)
 		{
 			if (property.id == SCORE_TOTAL_ID)
 			{
@@ -75,7 +104,7 @@
 			}
 		}
 
-		public void Execute(ref Entity entity, in SendProperty property, string v)
+		public void Execute(ref Entity entity, ref SendProperty property, string v)
 		{
 			if (property.id == TEAM_NAME_ID)
 			{

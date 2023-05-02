@@ -11,7 +11,7 @@ using static System.Net.Mime.MediaTypeNames;
 
 namespace DemoReader
 {
-	public struct Player
+	public unsafe struct Player
 	{
 		public Vector3 Position;
 		public Vector3 Velocity;
@@ -32,11 +32,15 @@ namespace DemoReader
 		public bool HasHelmet;
 		public bool IsDucking;
 		public bool IsInBuyZone;
+
+		public fixed int Weapons[5];
+		public fixed int WeaponAmmo[32];
+		public int ActiveWeapon;
 	}
 
 	public struct Bombsite
 	{
-		public int BombsiteEnt;
+		public Guid BombsiteEnt;
 
 		public Vector2 Center;
 		public Vector4 BoundingBox;
@@ -82,30 +86,33 @@ namespace DemoReader
 		{
 			scoreEventHandler.Init(serverClasses);
 			playerEventHandler.Init(serverClasses);
+			gameRulesEventHandler.Init(serverClasses);
+			bombsiteEventHandler.Init(serverClasses);
+			infernoEventHandler.Init(serverClasses);
 		}
 
-		public void Execute(ref ServerClass serverClass, ref Entity entity, in SendProperty property, int v)
+		public void Execute(ref ServerClass serverClass, ref Entity entity, ref SendProperty property, int v)
 		{
-			scoreEventHandler.Execute(ref entity, property, v);
-			playerEventHandler.Execute(ref serverClass, ref entity, property, v);
-			gameRulesEventHandler.Execute(ref serverClass, ref entity, property, v);
-			infernoEventHandler.Execute(ref serverClass, ref entity, property, v);
+			scoreEventHandler.Execute(ref entity, ref property, v);
+			playerEventHandler.Execute(ref serverClass, ref entity, ref property, v);
+			gameRulesEventHandler.Execute(ref serverClass, ref entity, ref property, v);
+			infernoEventHandler.Execute(ref serverClass, ref entity, ref property, v);
 		}
 
-		public void Execute(ref ServerClass serverClass, ref Entity entity, in SendProperty property, float v)
+		public void Execute(ref ServerClass serverClass, ref Entity entity, ref SendProperty property, float v)
 		{
-			playerEventHandler.Execute(ref serverClass, ref entity, property, v);
+			playerEventHandler.Execute(ref serverClass, ref entity, ref property, v);
 		}
 
-		public void Execute(ref ServerClass serverClass, ref Entity entity, in SendProperty property, Vector3 v)
+		public void Execute(ref ServerClass serverClass, ref Entity entity, ref SendProperty property, Vector3 v)
 		{
-			playerEventHandler.Execute(ref serverClass, ref entity, property, v);
-			bombsiteEventHandler.Execute(ref serverClass, ref entity, property, v);
+			playerEventHandler.Execute(ref serverClass, ref entity, ref property, v);
+			bombsiteEventHandler.Execute(ref serverClass, ref entity, ref property, v);
 		}
 
-		public void Execute(ref ServerClass serverClass, ref Entity entity, in SendProperty property, string v)
+		public void Execute(ref ServerClass serverClass, ref Entity entity, ref SendProperty property, string v)
 		{
-			scoreEventHandler.Execute(ref entity, property, v);
+			scoreEventHandler.Execute(ref entity, ref property, v);
 		}
 
 		public void Destroy(ref ServerClass serverClass, ref Entity entity)

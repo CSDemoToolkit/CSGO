@@ -8,30 +8,30 @@ namespace DemoReader
 {
     internal static class PropDecoder
     {
-        public static object DecodeProp(in SendProperty property, ref SpanBitStream bitStream, in Span<SendProperty> properties)
+        public static object DecodeProp(ref SendProperty property, ref SpanBitStream bitStream, in Span<SendProperty> properties)
         {
             switch (property.type)
             {
                 case SendPropertyType.Int:
-                    return DecodeInt(property, ref bitStream);
+                    return DecodeInt(ref property, ref bitStream);
                 case SendPropertyType.Int64:
-                    return DecodeInt64(property, ref bitStream);
+                    return DecodeInt64(ref property, ref bitStream);
                 case SendPropertyType.Float:
-                    return DecodeFloat(property, ref bitStream);
+                    return DecodeFloat(ref property, ref bitStream);
                 case SendPropertyType.Vector:
-                    return DecodeVector(property, ref bitStream);
+                    return DecodeVector(ref property, ref bitStream);
                 case SendPropertyType.Array:
-                    return DecodeArray(property, ref bitStream, properties);
+                    return DecodeArray(ref property, ref bitStream, properties);
                 case SendPropertyType.String:
-                    return DecodeString(property, ref bitStream);
+                    return DecodeString(ref property, ref bitStream);
                 case SendPropertyType.VectorXY:
-                    return DecodeVectorXY(property, ref bitStream);
+                    return DecodeVectorXY(ref property, ref bitStream);
                 default:
                     throw new NotImplementedException("Could not read property. Abort! ABORT!");
             }
         }
 
-        public static int DecodeInt(in SendProperty prop, ref SpanBitStream bitStream)
+        public static int DecodeInt(ref SendProperty prop, ref SpanBitStream bitStream)
 		{
 			if (prop.flags.HasFlagFast(SendPropertyFlags.VarInt))
 			{
@@ -57,7 +57,7 @@ namespace DemoReader
 			}
 		}
 
-		public static long DecodeInt64(in SendProperty prop, ref SpanBitStream bitStream)
+		public static long DecodeInt64(ref SendProperty prop, ref SpanBitStream bitStream)
         {
             if (prop.flags.HasFlagFast(SendPropertyFlags.VarInt))
             {
@@ -102,7 +102,7 @@ namespace DemoReader
 		const SendPropertyFlags FLOAT_FLAGS = SendPropertyFlags.NoScale | SendPropertyFlags.Coord | SendPropertyFlags.CellCoord | SendPropertyFlags.Normal | SendPropertyFlags.CoordMp | SendPropertyFlags.CoordMpLowPrecision | SendPropertyFlags.CoordMpLowPrecision | SendPropertyFlags.CoordMpIntegral | SendPropertyFlags.CellCoordLowPrecision | SendPropertyFlags.CellCoordIntegral;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float DecodeFloat(in SendProperty prop, ref SpanBitStream bitStream)
+        public static float DecodeFloat(ref SendProperty prop, ref SpanBitStream bitStream)
         {
 			if ((prop.flags & FLOAT_FLAGS) != 0)
 				return DecodeSpecialFloat(prop, ref bitStream);
@@ -113,16 +113,16 @@ namespace DemoReader
 			return prop.lowValue + (prop.highValue - prop.lowValue) * (dwInterp / ((1 << prop.numBits) - 1));
         }
 
-        public static Vector3 DecodeVector(in SendProperty prop, ref SpanBitStream bitStream)
+        public static Vector3 DecodeVector(ref SendProperty prop, ref SpanBitStream bitStream)
         {
 			Vector3 v = new Vector3();
 
-            v.X = DecodeFloat(prop, ref bitStream);
-            v.Y = DecodeFloat(prop, ref bitStream);
+            v.X = DecodeFloat(ref prop, ref bitStream);
+            v.Y = DecodeFloat(ref prop, ref bitStream);
 
             if (!prop.flags.HasFlagFast(SendPropertyFlags.Normal))
             {
-                v.Z = DecodeFloat(prop, ref bitStream);
+                v.Z = DecodeFloat(ref prop, ref bitStream);
             }
             else
             {
@@ -148,7 +148,7 @@ namespace DemoReader
             return v;
         }
 
-        public static object[] DecodeArray(in SendProperty prop, ref SpanBitStream bitStream, in Span<SendProperty> properties)
+        public static object[] DecodeArray(ref SendProperty prop, ref SpanBitStream bitStream, in Span<SendProperty> properties)
         {
             int numElements = prop.numElements;
             int maxElements = numElements;
@@ -166,13 +166,13 @@ namespace DemoReader
 			SendProperty temp = prop.arrayElementProp.ToSendProperty();
             for (int i = 0; i < nElements; i++)
             {
-                result[i] = DecodeProp(temp, ref bitStream, properties);
+                result[i] = DecodeProp(ref temp, ref bitStream, properties);
 			}
 
             return result;
         }
 
-        public static string DecodeString(in SendProperty prop, ref SpanBitStream bitStream)
+        public static string DecodeString(ref SendProperty prop, ref SpanBitStream bitStream)
         {
 			int bytes = bitStream.ReadInt(9);
 
@@ -182,11 +182,11 @@ namespace DemoReader
 			return Encoding.Default.GetString(buff);
         }
 
-        public static Vector3 DecodeVectorXY(in SendProperty prop, ref SpanBitStream bitStream)
+        public static Vector3 DecodeVectorXY(ref SendProperty prop, ref SpanBitStream bitStream)
         {
 			Vector3 v = new Vector3();
-            v.X = DecodeFloat(prop, ref bitStream);
-            v.Y = DecodeFloat(prop, ref bitStream);
+            v.X = DecodeFloat(ref prop, ref bitStream);
+            v.Y = DecodeFloat(ref prop, ref bitStream);
 
             return v;
         }

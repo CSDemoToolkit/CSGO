@@ -25,14 +25,17 @@ namespace Runner
 			Console.WriteLine($"Using demo {useDemoInfo}");
 
             Stopwatch sw = Stopwatch.StartNew();
-			if (useDemoInfo == 1)
-            {
-                demo.Analyze("Demos/demo1.dem");
-            }
-            else
-            {
-                demoReader.Analyze("Demos/demo1.dem");
-            }
+			for (int i = 0; i < 1; i++)
+			{
+				if (useDemoInfo == 1)
+				{
+					demo.Analyze("Demos/demo1.dem");
+				}
+				else
+				{
+					demoReader.Analyze("Demos/demo1.dem");
+				}
+			}
             sw.Stop();
             Console.WriteLine(sw.ElapsedMilliseconds);
         }
@@ -51,9 +54,9 @@ namespace Runner
 					break;
 			}
 
-			//Console.WriteLine($"CT: {ct}, T: {t}");
-			//Console.WriteLine($"	{demoReader.eventHandler.bombsites[0].BoundingBox}");
-			//Console.WriteLine($"	Player 0: {demoReader.eventHandler.players[0].Position}");
+			Console.WriteLine($"CT: {ct}, T: {t}");
+			Console.WriteLine($"	{demoReader.eventHandler.bombsites[1].Center}");
+			Console.WriteLine($"	Player 0: {demoReader.eventHandler.players[0].Position}");
 		}
 	}
 }

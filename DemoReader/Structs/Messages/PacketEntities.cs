@@ -249,54 +249,50 @@ namespace DemoReader
 				//Now read the updated props
 				for (int i = 0; i < idx; i++)
 				{
-					DecodeProp(ref serverClass, ref entity, ref bitStream, entriesPtr[i], properties, eventHandler);
+					DecodeProp(ref serverClass, ref entity, ref bitStream, ref entriesPtr[i], properties, eventHandler);
 				}
 			}
 		}
 
-		static int t;
-		static int ct;
-
-		static void DecodeProp(ref ServerClass serverClass, ref Entity entity, ref SpanBitStream bitStream, in SendProperty property, in Span<SendProperty> properties, DemoEventHandler eventHandler)
+		static void DecodeProp(ref ServerClass serverClass, ref Entity entity, ref SpanBitStream bitStream, ref SendProperty property, in Span<SendProperty> properties, DemoEventHandler eventHandler)
         {
 			switch (property.type)
 			{
 				case SendPropertyType.Int:
 				{
-					var v = PropDecoder.DecodeInt(property, ref bitStream);
-					eventHandler.Execute(ref serverClass, ref entity, property, v);
+					var v = PropDecoder.DecodeInt(ref property, ref bitStream);
+					eventHandler.Execute(ref serverClass, ref entity, ref property, v);
 					break;
 				}
 				case SendPropertyType.Float:
 				{
-					var v = PropDecoder.DecodeFloat(property, ref bitStream);
-					eventHandler.Execute(ref serverClass, ref entity, property, v);
+					var v = PropDecoder.DecodeFloat(ref property, ref bitStream);
+					eventHandler.Execute(ref serverClass, ref entity, ref property, v);
 					break;
 				}	
 				case SendPropertyType.Vector:
 				{
-					var v = PropDecoder.DecodeVector(property, ref bitStream);
-					eventHandler.Execute(ref serverClass, ref entity, property, v);
+					var v = PropDecoder.DecodeVector(ref property, ref bitStream);
+					eventHandler.Execute(ref serverClass, ref entity, ref property, v);
 					break;
 				}
-					break;
 				case SendPropertyType.VectorXY:
 				{
-					var v = PropDecoder.DecodeVectorXY(property, ref bitStream);
-					eventHandler.Execute(ref serverClass, ref entity, property, v);
+					var v = PropDecoder.DecodeVectorXY(ref property, ref bitStream);
+					eventHandler.Execute(ref serverClass, ref entity, ref property, v);
 					break;
 				}
 				case SendPropertyType.String:
 				{
-					var v = PropDecoder.DecodeString(property, ref bitStream);
-					eventHandler.Execute(ref serverClass, ref entity, property, v);
+					var v = PropDecoder.DecodeString(ref property, ref bitStream);
+					eventHandler.Execute(ref serverClass, ref entity, ref property, v);
 					break;
 				}
 				case SendPropertyType.Array:
-					var v5 = PropDecoder.DecodeArray(property, ref bitStream, properties);
+					var v5 = PropDecoder.DecodeArray(ref property, ref bitStream, properties);
 					break;
 				case SendPropertyType.Int64:
-					var v6 = PropDecoder.DecodeInt64(property, ref bitStream);
+					var v6 = PropDecoder.DecodeInt64(ref property, ref bitStream);
 					break;
 				default:
 					break;

@@ -28,7 +28,7 @@ namespace DemoReader
 			GetExcludes(dataTables[serverClass.dataTableID], dataTables, excludes, true);
 
 			var flattendProps = new List<SendProperty>();
-			GatherProps(dataTables[serverClass.dataTableID], flattendProps, excludes, dataTables);
+			GatherProps(dataTables[serverClass.dataTableID], flattendProps, excludes, dataTables, Guid.Empty, "");
 
 
 			var priorities = flattendProps.Select(x => x.priority).Append(64).Distinct().Order();
@@ -76,15 +76,15 @@ namespace DemoReader
 			return excludes.Any(x => table.netTableName == x.dtName && property.varName == x.varName);
 		}
 
-		static void GatherProps(in SendTable table, List<SendProperty> flattenedProps, IEnumerable<SendProperty> excludes, List<SendTable> dataTables)
+		static void GatherProps(in SendTable table, List<SendProperty> flattenedProps, IEnumerable<SendProperty> excludes, List<SendTable> dataTables, Guid parent, string parentName)
 		{
 			List<SendProperty> tmpFlattenedProps = new List<SendProperty>();
-			GatherProps_IterateProps(table, tmpFlattenedProps, flattenedProps, excludes, dataTables);
+			GatherProps_IterateProps(table, tmpFlattenedProps, flattenedProps, excludes, dataTables, parent, parentName);
 
 			flattenedProps.AddRange(tmpFlattenedProps);
 		}
 
-		static void GatherProps_IterateProps(SendTable table, List<SendProperty> flattenedProps, List<SendProperty> aflattenedProps, IEnumerable<SendProperty> excludes, List<SendTable> dataTables)
+		static void GatherProps_IterateProps(SendTable table, List<SendProperty> flattenedProps, List<SendProperty> aflattenedProps, IEnumerable<SendProperty> excludes, List<SendTable> dataTables, Guid parent, string parentName)
 		{
 			for (int i = 0; i < table.properties.Count; i++)
 			{
@@ -104,17 +104,20 @@ namespace DemoReader
 					if (property.flags.HasFlag(SendPropertyFlags.Collapsible))
 					{
 						//we don't prefix Collapsible stuff, since it is just derived mostly
-						GatherProps_IterateProps(subTable, flattenedProps, aflattenedProps, excludes, dataTables);
+						GatherProps_IterateProps(subTable, flattenedProps, aflattenedProps, excludes, dataTables, Guid.Empty, "");
 					}
 					else
 					{
 						//We do however prefix everything else
 
-						GatherProps(subTable, aflattenedProps, excludes, dataTables);
+						GatherProps(subTable, aflattenedProps, excludes, dataTables, property.id, property.varName);
 					}
 				}
 				else
 				{
+					property.parent = parent;
+					property.parentName = parentName;
+
 					if (property.type == SendPropertyType.Array)
 					{
 						property.arrayElementProp = new(table.properties[i - 1]);
