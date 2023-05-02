@@ -20,7 +20,7 @@
 			ROUND_WIN_STATUS_ID = serverClasses.FindProperty("CCSGameRulesProxy", "m_iRoundWinStatus").id;
 		}
 
-		public void Execute(ref ServerClass serverClass, ref Entity entity, ref SendProperty property, int v)
+		public void Execute(ref ServerClass serverClass, ref Entity entity, in SendProperty property, int v)
 		{
 			if (serverClass.id == GAME_RULES_PROXY_ID)
 			{

@@ -29,7 +29,7 @@ namespace DemoReader
 			VEC_MAX_ID = serverClasses.FindProperty("CBaseTrigger", "m_vecMaxs").id;
 		}
 
-		public void Execute(ref ServerClass serverClass, ref Entity entity, ref SendProperty property, Vector3 v)
+		public void Execute(ref ServerClass serverClass, ref Entity entity, in SendProperty property, Vector3 v)
 		{
 			if (serverClass.id == PLAYER_RESOURCE_ID)
 			{
