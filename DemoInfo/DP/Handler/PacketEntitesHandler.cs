@@ -1,4 +1,5 @@
-﻿using DemoInfo.DT;
+﻿using DemoInfo.BitStreamImpl;
+using DemoInfo.DT;
 using System;
 using System.Collections.Generic;
 
@@ -16,7 +17,10 @@ namespace DemoInfo.DP.Handler
         {
             int currentEntity = -1;
 
-            for (int i = 0; i < packetEntities.UpdatedEntries; i++)
+			var r = (UnsafeBitStream)reader;
+
+			//Console.WriteLine("------ PACKET ------");
+			for (int i = 0; i < packetEntities.UpdatedEntries; i++)
             {
                 //First read which entity is updated
                 currentEntity += 1 + (int)reader.ReadUBitInt();
@@ -29,21 +33,27 @@ namespace DemoInfo.DP.Handler
                     // enter flag
                     if (reader.ReadBit())
                     {
-                        //Console.WriteLine($"{currentEntity} - Create");
-                        //create it
-                        var e = ReadEnterPVS(reader, currentEntity, parser);
+						//Console.WriteLine($"{currentEntity} - Create");
+						//create it
+						var e = ReadEnterPVS(reader, currentEntity, parser);
+						//Console.WriteLine($"Create EntityID: {currentEntity}, ServerClass: {e.ServerClass.ClassID}");
 
                         parser.Entities[currentEntity] = e;
 
+						//Console.WriteLine($"EntityID: {e.ID}, ServerClass: {e.ServerClass.ClassID}");
                         e.ApplyUpdate(reader);
-                    }
+						//Console.WriteLine($"	Idx> {r.Offset}");
+					}
                     else
                     {
                         //Console.WriteLine($"{currentEntity} - Update");
                         // preserve / update
                         Entity e = parser.Entities[currentEntity];
-                        e.ApplyUpdate(reader);
-                    }
+						//Console.WriteLine($"Update EntityID: {e.ID}, ServerClass: {e.ServerClass.ClassID}");
+						//Console.WriteLine($"EntityID: {e.ID}, ServerClass: {e.ServerClass.ClassID}");
+						e.ApplyUpdate(reader);
+						//Console.WriteLine($"	Idx> {r.Offset}");
+					}
                 }
                 else
                 {
@@ -71,11 +81,12 @@ namespace DemoInfo.DP.Handler
         {
             //What kind of entity?
             int serverClassID = (int)reader.ReadInt(parser.SendTableParser.ClassBits);
-            //Console.WriteLine($"    {parser.SendTableParser.ServerClasses.Count}-{parser.SendTableParser.ClassBits}");
+			//Console.WriteLine($"EntityID: {id}, ServerClass: {serverClassID}");
+			//Console.WriteLine($"    {parser.SendTableParser.ServerClasses.Count}-{parser.SendTableParser.ClassBits}");
 
-            //So find the correct server class
-            //Console.WriteLine(serverClassID);
-            ServerClass entityClass = parser.SendTableParser.ServerClasses[serverClassID];
+			//So find the correct server class
+			//Console.WriteLine(serverClassID);
+			ServerClass entityClass = parser.SendTableParser.ServerClasses[serverClassID];
 
             reader.ReadInt(10); //Entity serial. 
             //Never used anywhere I guess. Every parser just skips this
@@ -86,19 +97,23 @@ namespace DemoInfo.DP.Handler
             //give people the chance to subscribe to events for this
             newEntity.ServerClass.AnnounceNewEntity(newEntity);
 
-            //And then parse the instancebaseline. 
-            //basically you could call
-            //newEntity.ApplyUpdate(parser.instanceBaseline[entityClass]; 
-            //This code below is just faster, since it only parses stuff once
-            //which is faster. 
+			//And then parse the instancebaseline. 
+			//basically you could call
+			//newEntity.ApplyUpdate(parser.instanceBaseline[entityClass]; 
+			//This code below is just faster, since it only parses stuff once
+			//which is faster. 
 
-            object[] fastBaseline;
+			//Console.WriteLine($"Baseline length: {parser.instanceBaseline[serverClassID].Length}");
+
+			/*
+			object[] fastBaseline;
             if (parser.PreprocessedBaselines.TryGetValue(serverClassID, out fastBaseline))
             {
                 PropertyEntry.Emit(newEntity, fastBaseline);
             }
             else
             {
+			*/
                 var preprocessedBaseline = new List<object>();
                 if (parser.instanceBaseline.ContainsKey(serverClassID))
                 {
@@ -109,8 +124,8 @@ namespace DemoInfo.DP.Handler
                     }
                 }
 
-                parser.PreprocessedBaselines.Add(serverClassID, preprocessedBaseline.ToArray());
-            }
+                //parser.PreprocessedBaselines.Add(serverClassID, preprocessedBaseline.ToArray());
+            //}
 
             return newEntity;
         }

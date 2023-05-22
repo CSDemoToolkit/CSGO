@@ -1,9 +1,57 @@
 ﻿namespace DemoReader
 {
-    public struct SendPropperty
+	public struct SendPropertyArrayProp
+	{
+		public SendPropertyType type;
+		public string varName;
+		public string parentName;
+		public SendPropertyFlags flags;
+		public int priority;
+		public string dtName;
+		public float lowValue;
+		public float highValue;
+		public int numBits;
+
+		public Guid parent;
+		public Guid id;
+
+		public SendPropertyArrayProp(SendProperty p)
+		{
+			type = p.type;
+			varName = p.varName;
+			parentName = p.parentName;
+			flags = p.flags;
+			priority = p.priority;
+			dtName = p.dtName;
+			lowValue = p.lowValue;
+			highValue = p.highValue;
+			numBits = p.numBits;
+			id = p.id;
+			parent = p.parent;
+		}
+
+		public SendProperty ToSendProperty()
+		{
+			return new()
+			{
+				type = type,
+				varName = varName,
+				flags = flags,
+				priority = priority,
+				dtName = dtName,
+				lowValue = lowValue,
+				highValue = highValue,
+				numBits = numBits,
+				id = id
+			};
+		}
+	}
+
+    public struct SendProperty
     {
         public SendPropertyType type;
         public string varName;
+        public string parentName;
         public SendPropertyFlags flags;
         public int priority;
         public string dtName;
@@ -12,9 +60,15 @@
         public float highValue;
         public int numBits;
 
-        public static SendPropperty Parse(SpanStream<byte> stream)
+		public Guid parent;
+		public Guid id;
+
+		public SendPropertyArrayProp arrayElementProp;
+
+        public static SendProperty Parse(SpanStream<byte> stream)
         {
-            var prop = new SendPropperty();
+            var prop = new SendProperty();
+			prop.id = Guid.NewGuid();
 
             while (!stream.IsEnd)
             {
@@ -27,7 +81,7 @@
                     if (fieldnum == 2)
                     {
                         prop.varName = stream.ReadProtobufString();
-                    }
+					}
                     else if (fieldnum == 5)
                     {
                         prop.dtName = stream.ReadProtobufString();

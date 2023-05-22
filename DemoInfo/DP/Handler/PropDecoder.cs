@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Text;
+using DemoInfo.BitStreamImpl;
 using DemoInfo.DT;
 
 namespace DemoInfo.DP.Handler
@@ -20,9 +21,8 @@ namespace DemoInfo.DP.Handler
                 case SendPropertyType.Vector:
                     return DecodeVector(sendProp, stream);
                 case SendPropertyType.Array:
-                    var test = DecodeArray(prop, stream);
-                    return test;
-                case SendPropertyType.String:
+                    return DecodeArray(prop, stream);
+				case SendPropertyType.String:
                     return DecodeString(sendProp, stream);
                 case SendPropertyType.VectorXY:
                     return DecodeVectorXY(sendProp, stream);
@@ -35,7 +35,7 @@ namespace DemoInfo.DP.Handler
         {
             if (prop.Flags.HasFlagFast(SendPropertyFlags.VarInt))
             {
-                if (prop.Flags.HasFlagFast(SendPropertyFlags.Unsigned))
+				if (prop.Flags.HasFlagFast(SendPropertyFlags.Unsigned))
                 {
                     return (int)reader.ReadVarInt();
                 }
@@ -160,7 +160,8 @@ namespace DemoInfo.DP.Handler
 
         public static object[] DecodeArray(FlattenedPropEntry flattenedProp, IBitStream reader)
         {
-            int numElements = flattenedProp.Prop.NumberOfElements;
+			var s = (UnsafeBitStream)reader;
+			int numElements = flattenedProp.Prop.NumberOfElements;
             int maxElements = numElements;
 
             int numBits = 1;
@@ -174,11 +175,13 @@ namespace DemoInfo.DP.Handler
 
             object[] result = new object[nElements];
 
-            FlattenedPropEntry temp = new FlattenedPropEntry("", flattenedProp.ArrayElementProp, null);
+			//Console.WriteLine($"			Decoding array - {numElements} - {maxElements} - {nElements} - {flattenedProp.ArrayElementProp.Type} - {flattenedProp.ArrayElementProp.Name} - {s.Offset}");
+			FlattenedPropEntry temp = new FlattenedPropEntry("", flattenedProp.ArrayElementProp, null);
             for (int i = 0; i < nElements; i++)
             {
                 result[i] = DecodeProp(temp, reader);
-            }
+				//Console.WriteLine($"			{i}: {result[i].GetType()} - {temp.Prop.NumberOfBits} - {s.Offset}");
+			}
 
             return result;
         }

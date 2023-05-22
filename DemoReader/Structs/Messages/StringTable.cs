@@ -1,6 +1,8 @@
-﻿namespace DemoReader
+﻿using System.Runtime.Intrinsics.Arm;
+
+namespace DemoReader
 {
-    public struct StringTable
+	public struct StringTable
     {
         public string name;
         public uint maxEntries;

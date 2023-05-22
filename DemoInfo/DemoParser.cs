@@ -727,7 +727,7 @@ namespace DemoInfo
                     break;
                 case DemoCommand.DataTables:
                     BitStream.BeginChunk(BitStream.ReadSignedInt(32) * 8);
-                    Console.WriteLine("DataTables");
+                    //Console.WriteLine("DataTables");
                     SendTableParser.ParsePacket(BitStream);
                     BitStream.EndChunk();
 
@@ -1162,9 +1162,8 @@ namespace DemoInfo
 
             if (playerEntity.Props.All(a => a.Entry.PropertyName != "m_hMyWeapons.000"))
             {
-                weaponPrefix = "bcc_nonlocaldata.m_hMyWeapons.";
+				weaponPrefix = "bcc_nonlocaldata.m_hMyWeapons.";
             }
-
 
             int[] cache = new int[MAXWEAPONS];
 

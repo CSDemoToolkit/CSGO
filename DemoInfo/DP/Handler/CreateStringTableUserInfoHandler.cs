@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DemoInfo.BitStreamImpl;
+using System;
 using System.Collections.Generic;
 using System.IO;
 
@@ -32,8 +33,14 @@ namespace DemoInfo.DP.Handler
 
             int lastEntry = -1;
 
-            for (int i = 0; i < table.NumEntries; i++)
+			var s = (UnsafeBitStream)reader;
+			for (int i = 0; i < table.NumEntries; i++)
             {
+				if (i == 0)
+				{
+					//Console.WriteLine($"{i} - {s.Offset}");
+				}
+
                 int entryIndex = lastEntry + 1;
                 // d in the entity-index
                 if (!reader.ReadBit())
@@ -61,12 +68,14 @@ namespace DemoInfo.DP.Handler
 
                         entry = history[index].Substring(0, bytestocopy);
 
+						int pre = s.Offset;
                         entry += reader.ReadString(1024);
-                    }
+					}
                     else
                     {
+						int pre = s.Offset;
                         entry = reader.ReadString(1024);
-                    }
+					}
                 }
 
                 if (entry == null)
@@ -111,10 +120,9 @@ namespace DemoInfo.DP.Handler
                 }
                 else if (table.Name == "instancebaseline")
                 {
-                    int classid = int.Parse(entry); //wtf volvo?
-
-                    parser.instanceBaseline[classid] = userdata;
-                }
+					int classid = int.Parse(entry); //wtf volvo?
+					parser.instanceBaseline[classid] = userdata;
+				}
                 else if (table.Name == "modelprecache")
                 {
                     parser.modelprecache[entryIndex] = entry;

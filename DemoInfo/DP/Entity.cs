@@ -1,8 +1,10 @@
-﻿using DemoInfo.DP.Handler;
+﻿using DemoInfo.BitStreamImpl;
+using DemoInfo.DP.Handler;
 using DemoInfo.DT;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using static System.Formats.Asn1.AsnWriter;
 
 namespace DemoInfo.DP
 {
@@ -45,42 +47,65 @@ namespace DemoInfo.DP
 
             //Read the field-indicies in a "new" way?
             bool newWay = reader.ReadBit();
+			int prevIndex = -1;
             int index = -1;
             var entries = new List<PropertyEntry>();
 
-            //Console.WriteLine(" Reading field index");
-            //No read them. 
-            while ((index = ReadFieldIndex(reader, index, newWay)) != -1)
+			var s = (UnsafeBitStream)reader;
+			//Console.WriteLine($"Reading field index - {s.Offset}");
+			//No read them. 
+			//Console.WriteLine($"New: {s.Offset}");
+			while ((index = ReadFieldIndex(reader, index, newWay)) != -1)
             {
-                //Console.WriteLine($"        {index}");
+                //Console.WriteLine($"        {index} - {Props[index].Entry.Prop.Priority} - {Props[index].Entry.Prop.Name}");
                 entries.Add(Props[index]);
+				prevIndex = index;
             }
 
-            //Now read the updated props
-            foreach (var prop in entries)
+			if (entries.Count == 0)
+			{
+				//Console.WriteLine($"	Total: {prevIndex}, {entries.Count}, {s.Offset}");
+				//Console.WriteLine($"Total: {prevIndex}, {entries.Count}");
+			}
+			else
+			{
+				//Console.WriteLine($"	Total: {prevIndex}, {entries.Count}, {s.Offset}, {entries[entries.Count - 1].Entry.Prop.Type}");
+				//Console.WriteLine($"Total: {prevIndex}, {entries.Count}, {entries[entries.Count - 1].Entry.Prop.Type}");
+			}
+			//Console.WriteLine($"	{entries.Count}");
+
+			//Now read the updated props
+			index = 0;
+			foreach (var prop in entries)
             {
-                prop.Decode(reader, this);
+				//Console.Write($"        {index} - {prop.Entry.Prop.Type} - {prop.Entry.Prop.Name} - {s.Offset}");
+				prop.Decode(reader, this);
+				index++;
             }
-        }
+			//Console.WriteLine("end");
+		}
 
         private int ReadFieldIndex(IBitStream reader, int lastIndex, bool bNewWay)
         {
-            if (bNewWay)
+			if (bNewWay)
             {
                 if (reader.ReadBit())
                 {
-                    return lastIndex + 1;
+					//Console.WriteLine("		1");
+					return lastIndex + 1;
                 }
             }
 
             int ret = 0;
             if (bNewWay && reader.ReadBit())
             {
-                ret = (int)reader.ReadInt(3); // read 3 bits
-            }
+				ret = (int)reader.ReadInt(3); // read 3 bits
+				//Console.WriteLine($"		2 - {ret}");
+			}
             else
             {
-                ret = (int)reader.ReadInt(7); // read 7 bits
+				//Console.WriteLine("		3");
+				ret = (int)reader.ReadInt(7); // read 7 bits
                 switch (ret & (32 | 64))
                 {
                     case 32:
@@ -132,20 +157,32 @@ namespace DemoInfo.DP
 
         public void Decode(IBitStream stream, Entity e)
         {
-            //So here you start decoding. If you really want 
-            //to implement this yourself, GOOD LUCK. 
-            //also, be warned: They have 11 ways to read floats. 
-            //oh, btw: You may want to read the original Valve-code for this. 
-            switch (Entry.Prop.Type)
+			var v = (UnsafeBitStream)stream;
+			//Console.WriteLine($"Ent: {e.ID}, {Entry.Prop.Type} {v.Offset}");
+
+			//So here you start decoding. If you really want 
+			//to implement this yourself, GOOD LUCK. 
+			//also, be warned: They have 11 ways to read floats. 
+			//oh, btw: You may want to read the original Valve-code for this. 
+			switch (Entry.Prop.Type)
             {
                 case SendPropertyType.Int:
                 {
-                    var val = PropDecoder.DecodeInt(Entry.Prop, stream);
+					if (Entry.Prop.Name == "m_scoreTotal")
+					{
+						//Console.WriteLine($"Ent: {e.ID}, {Entry.Prop.Type} {v.Offset}");
+					}
+					var val = PropDecoder.DecodeInt(Entry.Prop, stream);
                     if (IntRecived != null)
                     {
                         IntRecived(this, new PropertyUpdateEventArgs<int>(val, e, this));
                     }
-                }
+					//Console.WriteLine($" - {val}");
+					if (Entry.Prop.Name == "m_scoreTotal")
+					{
+						//Console.WriteLine($"Score: {val}, {v.Offset}");
+					}
+				}
                     break;
                 case SendPropertyType.Int64:
                 {
@@ -154,7 +191,8 @@ namespace DemoInfo.DP
                     {
                         Int64Received(this, new PropertyUpdateEventArgs<long>(val, e, this));
                     }
-                }
+					//Console.WriteLine($" - {val}");
+				}
                     break;
                 case SendPropertyType.Float:
                 {
@@ -163,16 +201,18 @@ namespace DemoInfo.DP
                     {
                         FloatRecived(this, new PropertyUpdateEventArgs<float>(val, e, this));
                     }
-                }
+					//Console.WriteLine($" - {val}");
+				}
                     break;
                 case SendPropertyType.Vector:
                 {
                     var val = PropDecoder.DecodeVector(Entry.Prop, stream);
-                    if (VectorRecived != null)
+					if (VectorRecived != null)
                     {
                         VectorRecived(this, new PropertyUpdateEventArgs<Vector>(val, e, this));
                     }
-                }
+					//Console.WriteLine($" - {val}");
+				}
                     break;
                 case SendPropertyType.Array:
                 {
@@ -181,7 +221,8 @@ namespace DemoInfo.DP
                     {
                         ArrayRecived(this, new PropertyUpdateEventArgs<object[]>(val, e, this));
                     }
-                }
+					//Console.WriteLine($" - {val.Length}");
+				}
                     break;
                 case SendPropertyType.String:
                 {
@@ -190,7 +231,8 @@ namespace DemoInfo.DP
                     {
                         StringRecived(this, new PropertyUpdateEventArgs<string>(val, e, this));
                     }
-                }
+					//Console.WriteLine($" - {val.Length}");
+				}
                     break;
                 case SendPropertyType.VectorXY:
                 {
@@ -199,7 +241,8 @@ namespace DemoInfo.DP
                     {
                         VectorRecived(this, new PropertyUpdateEventArgs<Vector>(val, e, this));
                     }
-                }
+					//Console.WriteLine($" - {val}");
+				}
                     break;
                 default:
                     throw new NotImplementedException("Could not read property. Abort! ABORT! (is it a long?)");

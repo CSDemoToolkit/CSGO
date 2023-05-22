@@ -2,6 +2,8 @@
 using System.Data;
 using System.IO.MemoryMappedFiles;
 using System.Numerics;
+using System.Reflection.PortableExecutable;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -9,22 +11,34 @@ namespace DemoReader
 {
 	public class DemoReader
 	{
-		public List<SendTable> DataTables = new List<SendTable>();
-		public ServerClass[] ServerClasses;
-		public List<EventDescriptor> EventDescriptors = new List<EventDescriptor>();
+		List<SendTable> DataTables = new List<SendTable>();
+		List<StringTable> StringTables = new List<StringTable>();
+		ServerClass[] ServerClasses;
+		List<EventDescriptor> EventDescriptors = new List<EventDescriptor>();
 
-		public ArraySegment<byte>[] instanceBaselines = new ArraySegment<byte>[300]; // TODO: Replace 300
-		public string[] modelPrecaches = new string[847];
+		ArraySegment<byte>[] instanceBaselines = new ArraySegment<byte>[300]; // TODO: Replace 300
+		string[] modelPrecaches = new string[847];
 
-		public PlayerInfo[] players = new PlayerInfo[64];
+		PlayerInfo[] players = new PlayerInfo[64];
+		Entity[] entities = new Entity[1024];
 
-		public int ServerClassesBits;
+		int ServerClassesBits;
+
+		public DemoPacketContainer container;
+		public DemoEventHandler eventHandler;
+		public DemoPacketHandler packetHandler;
+
+		public DemoReader()
+		{
+			container = new DemoPacketContainer();
+			eventHandler = new DemoEventHandler(container, players);
+			packetHandler = new DemoPacketHandler(container, eventHandler);
+		}
 
 		public void Analyze(string path)
 		{
 			using var file = MemoryMappedFile.CreateFromFile(path);
 			using var stream = file.CreateViewStream();
-			//using var stream = File.OpenRead(path);
 
 			ReadHeader(stream);
 
@@ -34,8 +48,7 @@ namespace DemoReader
 				i++;
 			}
 
-			//Console.WriteLine(i);
-			//Console.WriteLine("Ended");
+			Console.WriteLine($"Ticks: {i}");
 		}
 
 		void ReadHeader(Stream stream)
@@ -85,16 +98,7 @@ namespace DemoReader
 			ServerClasses = GetServerClasses(ref spanStream, DataTables);
 			ServerClassesBits = BitOperations.Log2(BitOperations.RoundUpToPowerOf2((uint)ServerClasses.Length));
 
-			foreach (var item in ServerClasses)
-			{
-				Console.WriteLine($"{item.name} - {DataTables[item.dataTableID].netTableName}");
-				foreach (var prop in item.properties)
-				{
-					Console.WriteLine($"    Type: {prop.type}:{prop.varName} - {prop.flags.HasFlag(SendPropertyFlags.Exclude)} - {prop.priority}");
-				}
-
-                Console.WriteLine("done");
-            }
+			packetHandler.Init(ServerClasses);
 
 			return true;
 		}
@@ -118,15 +122,29 @@ namespace DemoReader
 				switch (cmd)
 				{
 					case SVCMessages.svc_PacketEntities:
-						PacketEntities.Parse(cmdStream, ServerClasses, ServerClassesBits);
+						PacketEntities.Parse(cmdStream, ServerClasses, entities, instanceBaselines, ServerClassesBits, packetHandler);
 						break;
 					case SVCMessages.svc_CreateStringTable:
+					{
 						StringTable table = StringTable.Parse(ref cmdStream);
 						var len = cmdStream.ReadProtobufVarInt();
 						SpanBitStream bitStream = cmdStream.SliceToBitStream(len);
 
-						HandleStringTable(ref table, ref bitStream, players, instanceBaselines, modelPrecaches);
+						StringTables.Add(table);
+						HandleCreateStringTable(ref table, ref bitStream, players, instanceBaselines, modelPrecaches);
 						break;
+					}
+					case SVCMessages.svc_UpdateStringTable:
+					{
+						UpdateStringTable updateTable = UpdateStringTable.Parse(ref cmdStream);
+						var len = cmdStream.ReadProtobufVarInt();
+						SpanBitStream bitStream = cmdStream.SliceToBitStream(len);
+
+						StringTable table = StringTables[(int)updateTable.tableId];
+						table.numEntries = updateTable.changedEntries;
+						HandleCreateStringTable(ref table, ref bitStream, players, instanceBaselines, modelPrecaches);
+						break;
+					}
 					case SVCMessages.svc_GameEventList:
 						EventDescriptors = GetEventDescriptors(cmdStream);
 						break;
@@ -134,6 +152,8 @@ namespace DemoReader
 						var e = GameEvent.Parse(cmdStream);
 						var keyStream = new SpanStream<byte>(e.keys.Span);
 						int eventId = e.eventId;
+
+						eventHandler.Update(ref e, ref CollectionsMarshal.AsSpan(EventDescriptors)[eventId]);
 						break;
 					default:
 						break;
@@ -143,7 +163,7 @@ namespace DemoReader
 			return true;
 		}
 
-		static void HandleStringTable(scoped ref StringTable table, scoped ref SpanBitStream stream, PlayerInfo[] players, ArraySegment<byte>[] instanceBaselines, string[] modelPrecaches)
+		static void HandleCreateStringTable(scoped ref StringTable table, scoped ref SpanBitStream stream, PlayerInfo[] players, ArraySegment<byte>[] instanceBaselines, string[] modelPrecaches)
 		{
 			if (stream.ReadBit())
 			{
@@ -166,20 +186,26 @@ namespace DemoReader
 				{
 					if (stream.ReadBit())
 					{
-						int index = stream.ReadInt(5);
-						int bytesToCopy = stream.ReadInt(5);
+						int index = stream.ReadBits(5);
+						int bytesToCopy = stream.ReadBits(5);
 
 						var memory = MemoryPool<byte>.Shared.Rent(1024 + bytesToCopy);
 						queue[index].Memory.Span.Slice(0, bytesToCopy).TryCopyTo(memory.Memory.Span);
 
-						stream.ReadUntill(0, 10, memory.Memory.Span.Slice(bytesToCopy)); // 10 might not be needed?
+						int pre = stream.idx;
+						int l = stream.ReadUntill(0, 10, memory.Memory.Span.Slice(bytesToCopy)); // 10 might not be needed?
+						memory.Memory.Span.Slice(l).Fill(0);
+
 						queue.PushBack(memory);
 					}
 					else
 					{
-						var memory = MemoryPool<byte>.Shared.Rent(1024); // 10 might not be needed?
+						var memory = MemoryPool<byte>.Shared.Rent(1024);
 
-						stream.ReadUntill(0, 10, memory.Memory.Span);
+						int pre = stream.idx;
+						int l = stream.ReadUntill(0, 10, memory.Memory.Span); // 10 might not be needed?
+						memory.Memory.Span.Slice(l).Fill(0);
+
 						queue.PushBack(memory);
 					}
 				}
@@ -206,14 +232,19 @@ namespace DemoReader
 				}
 				else if (table.name == "instancebaseline")
 				{
-					int classid = int.Parse(Encoding.UTF8.GetString(queue.Front().Memory.Span)); // TODO: My intuition tells me this can be optimized, but i am sick of this code RN
+					int classid = int.Parse(Encoding.UTF8.GetString(queue.Back().Memory.Span)); // TODO: My intuition tells me this can be optimized, but i am sick of this code RN
 					instanceBaselines[classid] = new ArraySegment<byte>(userdata.Slice(0, (int)userDataLength / 8).ToArray());
 				}
 				else if (table.name == "modelprecache")
 				{
-					modelPrecaches[idx] = Encoding.UTF8.GetString(queue.Front().Memory.Span);
+					modelPrecaches[idx] = Encoding.UTF8.GetString(queue.Back().Memory.Span);
 				}
 			}
+		}
+
+		static void HandleUpdateStringTable()
+		{
+
 		}
 
 		static List<SendTable> GetDataTables(ref SpanStream<byte> stream)
@@ -242,7 +273,7 @@ namespace DemoReader
 
 			for (int i = 0; i < serverClassCount; i++)
 			{
-				classes[i] = ServerClass.Parse(ref stream, dataTables);
+				classes[i] = ServerClass.Parse(ref stream, classes.AsSpan().Slice(0, i), dataTables);
 			}
 
 			return classes;
@@ -328,6 +359,26 @@ namespace DemoReader
 			return ret;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static int ReadBitInt(this ref SpanBitStream bs)
+		{
+			int ret = bs.ReadBits(6);
+			switch (ret & (16 | 32))
+			{
+				case 16:
+					ret = (ret & 15) | (bs.ReadBits(4) << 4);
+					break;
+				case 32:
+					ret = (ret & 15) | (bs.ReadBits(8) << 4);
+					break;
+				case 48:
+					ret = (ret & 15) | (bs.ReadBits(32 - 4) << 4);
+					break;
+			}
+
+			return ret;
+		}
+
 		public static string ReadCustomString(this ref SpanBitStream bs, uint length)
 		{
 			Span<byte> bytes = stackalloc byte[(int)BitOperations.RoundUpToPowerOf2(length)];
@@ -336,12 +387,41 @@ namespace DemoReader
 			return Encoding.UTF8.GetString(bytes);
 		}
 
-		public unsafe static string ReadCStyleString(this ref SpanBitStream bs)
+		public static string ReadCStyleString(this ref SpanBitStream bs)
 		{
 			Span<byte> bytes = stackalloc byte[1024];
 			bs.ReadUntill(0, bytes);
 
 			return Encoding.UTF8.GetString(bytes);
+		}
+
+		public static uint ReadUnsignedVarInt(this ref SpanBitStream bs)
+		{
+			uint tmpByte = 0x80;
+			uint result = 0;
+			for (int count = 0; (tmpByte & 0x80) != 0; count++)
+			{
+				if (count > 5)
+				{
+					throw new InvalidDataException("VarInt32 out of range");
+				}
+
+				tmpByte = bs.ReadByte();
+				result |= (tmpByte & 0x7F) << (7 * count);
+			}
+
+			return result;
+		}
+
+		public static int ReadSignedVarInt(this ref SpanBitStream bs)
+		{
+			uint result = bs.ReadUnsignedVarInt();
+			return (int)((result >> 1) ^ -(result & 1));
+		}
+
+		public static bool HasFlagFast(this SendPropertyFlags flags, SendPropertyFlags check)
+		{
+			return (flags & check) == check;
 		}
 	}
 }
