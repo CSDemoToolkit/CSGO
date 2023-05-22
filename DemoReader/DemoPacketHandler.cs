@@ -13,6 +13,8 @@ namespace DemoReader
 {
 	public unsafe struct Player
 	{
+		public string Name;
+
 		public Vector3 Position;
 		public Vector3 Velocity;
 		public Vector3 ViewDirection;
@@ -38,9 +40,10 @@ namespace DemoReader
 		public int ActiveWeapon;
 	}
 
-	public struct Bombsite
+	public struct BombsiteInfo
 	{
-		public Guid BombsiteEnt;
+		public Guid BombsiteGuid;
+		public int BombsiteId;
 
 		public Vector2 Center;
 		public Vector4 BoundingBox;
@@ -56,9 +59,18 @@ namespace DemoReader
 
 	}
 
-	public delegate void ScoreChange(int oldScore, int newScore, Team team);
-	public delegate void GamePhaseChange(GamePhase phase);
-	public delegate void RoundWinStatusChange(RoundWinStatus status);
+	public class DemoPacketContainer
+	{
+		public Player[] players = new Player[32];
+		public int[,] PlayerEquipment = new int[32, 64];
+		public BombsiteInfo[] bombsites = new BombsiteInfo[2];
+		public Equipment[] equipment = new Equipment[DemoPacketHandler.MAX_ENTITIES];
+
+		public Dictionary<int, Inferno> infernos = new Dictionary<int, Inferno>();
+
+		internal int tEnt = 0; // Yuck
+		internal int ctEnt = 0; // Yuck
+	}
 
 	public class DemoPacketHandler
 	{
@@ -66,9 +78,7 @@ namespace DemoReader
 		public const int INDEX_MASK = (1 << MAX_EDICT_BITS) - 1;
 		public const int MAX_ENTITIES = 1 << MAX_EDICT_BITS;
 
-		public event ScoreChange ScoreChange;
-		public event GamePhaseChange GamePhaseChange;
-		public event RoundWinStatusChange RoundWinStatusChange;
+		internal DemoPacketContainer container;
 
 		ScorePacketHandler scorePacketHandler;
 		PlayerPacketHandler playerPacketHandler;
@@ -77,24 +87,19 @@ namespace DemoReader
 		InfernoPacketHandler infernoPacketHandler;
 		WeaponPacketHandler weaponPacketHandler;
 
-		public Player[] players = new Player[32];
-		public int[,] PlayerEquipment = new int[32, 64];
-		public Bombsite[] bombsites = new Bombsite[2];
-		public Equipment[] equipment = new Equipment[MAX_ENTITIES];
-
-		public Dictionary<int, Inferno> infernos = new Dictionary<int, Inferno>();
-
-		public DemoPacketHandler()
+		public DemoPacketHandler(DemoPacketContainer container, DemoEventHandler eventHandler)
 		{
-			scorePacketHandler = new ScorePacketHandler(this);
+			this.container = container;
+
+			scorePacketHandler = new ScorePacketHandler(container, eventHandler);
 			playerPacketHandler = new PlayerPacketHandler(this, scorePacketHandler);
-			gamePacketEventHandler = new GamerRulePacketHandler(this);
+			gamePacketEventHandler = new GamerRulePacketHandler(eventHandler);
 			bombsitePacketHandler = new BombsitePacketHandler(this);
 			infernoPacketHandler = new InfernoPacketHandler(this);
 			weaponPacketHandler = new WeaponPacketHandler(this);
 		}
 
-		public void Init(Span<ServerClass> serverClasses)
+		internal void Init(Span<ServerClass> serverClasses)
 		{
 			scorePacketHandler.Init(serverClasses);
 			playerPacketHandler.Init(serverClasses);
@@ -104,7 +109,7 @@ namespace DemoReader
 			weaponPacketHandler.Init(serverClasses);
 		}
 
-		public void Execute(ref ServerClass serverClass, ref Entity entity, ref SendProperty property, int v)
+		internal void Execute(ref ServerClass serverClass, ref Entity entity, ref SendProperty property, int v)
 		{
 			scorePacketHandler.Execute(ref entity, ref property, v);
 			playerPacketHandler.Execute(ref serverClass, ref entity, ref property, v);
@@ -113,40 +118,25 @@ namespace DemoReader
 			weaponPacketHandler.Execute(ref serverClass, ref entity, ref property, v);
 		}
 
-		public void Execute(ref ServerClass serverClass, ref Entity entity, ref SendProperty property, float v)
+		internal void Execute(ref ServerClass serverClass, ref Entity entity, ref SendProperty property, float v)
 		{
 			playerPacketHandler.Execute(ref serverClass, ref entity, ref property, v);
 		}
 
-		public void Execute(ref ServerClass serverClass, ref Entity entity, ref SendProperty property, Vector3 v)
+		internal void Execute(ref ServerClass serverClass, ref Entity entity, ref SendProperty property, Vector3 v)
 		{
 			playerPacketHandler.Execute(ref serverClass, ref entity, ref property, v);
 			bombsitePacketHandler.Execute(ref serverClass, ref entity, ref property, v);
 		}
 
-		public void Execute(ref ServerClass serverClass, ref Entity entity, ref SendProperty property, string v)
+		internal void Execute(ref ServerClass serverClass, ref Entity entity, ref SendProperty property, string v)
 		{
 			scorePacketHandler.Execute(ref entity, ref property, v);
 		}
 
-		public void Destroy(ref ServerClass serverClass, ref Entity entity)
+		internal void Destroy(ref ServerClass serverClass, ref Entity entity)
 		{
 			infernoPacketHandler.Destroy(ref serverClass, ref entity);
-		}
-
-		internal void InvokeScoreChanged(int newScore, int oldScore, Team team)
-		{
-			ScoreChange?.Invoke(newScore, oldScore, team);
-		}
-
-		internal void InvokeGamePhaseChange(GamePhase phase)
-		{
-			GamePhaseChange?.Invoke(phase);
-		}
-
-		internal void InvokeRoundWinStatusChange(RoundWinStatus status)
-		{
-			RoundWinStatusChange?.Invoke(status);
 		}
 	}
 }

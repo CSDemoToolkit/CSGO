@@ -4,13 +4,13 @@ namespace DemoReader
 {
 	public class WeaponPacketHandler
 	{
-		DemoPacketHandler eventHandler;
+		DemoPacketHandler packetHandler;
 
 		Guid WEAPON_CLIP_ID;
 
-		public WeaponPacketHandler(DemoPacketHandler eventHandler)
+		public WeaponPacketHandler(DemoPacketHandler packetHandler)
 		{
-			this.eventHandler = eventHandler;
+			this.packetHandler = packetHandler;
 		}
 
 		public void Init(Span<ServerClass> serverClasses)

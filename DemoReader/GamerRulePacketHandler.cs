@@ -2,15 +2,15 @@
 {
 	public class GamerRulePacketHandler
 	{
-		DemoPacketHandler eventHandler;
+		DemoEventHandler eventHandler;
 
 		Guid GAME_RULES_PROXY_ID;
 		Guid GAME_PHASE_ID;
 		Guid ROUND_WIN_STATUS_ID;
 
-		public GamerRulePacketHandler(DemoPacketHandler eventHandler)
+		public GamerRulePacketHandler(DemoEventHandler eventHandler)
 		{
-			this.eventHandler=eventHandler;
+			this.eventHandler = eventHandler;
 		}
 
 		public void Init(Span<ServerClass> serverClasses)

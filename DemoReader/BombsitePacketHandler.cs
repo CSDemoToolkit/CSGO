@@ -4,7 +4,7 @@ namespace DemoReader
 {
 	public class BombsitePacketHandler
 	{
-		DemoPacketHandler eventHandler;
+		DemoPacketHandler packetHandler;
 
 		Guid PLAYER_RESOURCE_ID;
 		Guid BASE_TRIGGER_ID;
@@ -13,9 +13,9 @@ namespace DemoReader
 		Guid VEC_MIN_ID;
 		Guid VEC_MAX_ID;
 
-		public BombsitePacketHandler(DemoPacketHandler eventHandler)
+		public BombsitePacketHandler(DemoPacketHandler packetHandler)
 		{
-			this.eventHandler = eventHandler;
+			this.packetHandler = packetHandler;
 		}
 
 		public void Init(Span<ServerClass> serverClasses)
@@ -35,15 +35,17 @@ namespace DemoReader
 			{
 				if (property.id == BOMBSITE_CENTER_A_ID)
 				{
-					ref Bombsite bombsite = ref eventHandler.bombsites[0];
-					bombsite.BombsiteEnt = property.id;
+					ref BombsiteInfo bombsite = ref packetHandler.container.bombsites[0];
+					bombsite.BombsiteGuid = property.id;
+					bombsite.BombsiteId = entity.id;
 					bombsite.Center.X = v.X;
 					bombsite.Center.Y = v.Y;
 				}
 				else if(property.id == BOMBSITE_CENTER_B_ID)
 				{
-					ref Bombsite bombsite = ref eventHandler.bombsites[1];
-					bombsite.BombsiteEnt = property.id;
+					ref BombsiteInfo bombsite = ref packetHandler.container.bombsites[1];
+					bombsite.BombsiteGuid = property.id;
+					bombsite.BombsiteId = entity.id;
 					bombsite.Center.X = v.X;
 					bombsite.Center.Y = v.Y;
 				}
@@ -51,16 +53,16 @@ namespace DemoReader
 			else if(serverClass.id == BASE_TRIGGER_ID)
 			{
 				int bombsiteIdx = 0;
-				for (int i = 0; i < eventHandler.bombsites.Length; i++)
+				for (int i = 0; i < packetHandler.container.bombsites.Length; i++)
 				{
-					if (eventHandler.bombsites[i].BombsiteEnt == property.id)
+					if (packetHandler.container.bombsites[i].BombsiteGuid == property.id)
 					{
 						bombsiteIdx = i;
 						break;
 					}
 				}
 
-				ref Bombsite bombsite = ref eventHandler.bombsites[bombsiteIdx];
+				ref BombsiteInfo bombsite = ref packetHandler.container.bombsites[bombsiteIdx];
 				if (property.id == VEC_MIN_ID)
 				{
 					bombsite.BoundingBox.X = v.X;

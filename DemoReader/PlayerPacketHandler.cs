@@ -6,7 +6,7 @@ namespace DemoReader
 {
 	public class PlayerPacketHandler
 	{
-		DemoPacketHandler eventHandler;
+		DemoPacketHandler packetHandler;
 		ScorePacketHandler scoreEventHandler;
 
 		Guid IS_PLAYER_ID;
@@ -39,9 +39,9 @@ namespace DemoReader
 		Guid[] PLAYER_WEAPON_AMMO_NUM_ID = new Guid[32];
 		Guid PLAYER_ACTIVE_WEAPON_ID;
 
-		public PlayerPacketHandler(DemoPacketHandler eventHandler, ScorePacketHandler scoreEventHandler)
+		public PlayerPacketHandler(DemoPacketHandler packetHandler, ScorePacketHandler scoreEventHandler)
 		{
-			this.eventHandler = eventHandler;
+			this.packetHandler = packetHandler;
 			this.scoreEventHandler = scoreEventHandler;
 		}
 
@@ -89,7 +89,7 @@ namespace DemoReader
 			if (serverClass.id == IS_PLAYER_ID)
 			{
 				// Avoid bounds checking
-				ref Player player = ref Unsafe.Add(ref eventHandler.players[0], entity.id - 1);
+				ref Player player = ref Unsafe.Add(ref packetHandler.container.players[0], entity.id - 1);
 
 				if (property.id == PLAYER_HEALTH_ID)
 				{
@@ -183,7 +183,7 @@ namespace DemoReader
 			if (serverClass.id == IS_PLAYER_ID)
 			{
 				// Avoid bounds checking
-				ref Player player = ref Unsafe.Add(ref eventHandler.players[0], entity.id - 1);
+				ref Player player = ref Unsafe.Add(ref packetHandler.container.players[0], entity.id - 1);
 
 				if (property.id == PLAYER_VEC_ORIGIN_Z_ID)
 				{
@@ -223,7 +223,7 @@ namespace DemoReader
 				if (property.id == PLAYER_VEC_ORIGIN_ID)
 				{
 					// Avoid bounds checking
-					ref Player player = ref Unsafe.Add(ref eventHandler.players[0], entity.id - 1);
+					ref Player player = ref Unsafe.Add(ref packetHandler.container.players[0], entity.id - 1);
 
 					player.Position.X = v.X;
 					player.Position.Y = v.Y;

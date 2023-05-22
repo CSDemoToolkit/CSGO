@@ -61,22 +61,24 @@
 
 	public class ScorePacketHandler
 	{
-		DemoPacketHandler eventHandler;
+		DemoPacketContainer container;
+		DemoEventHandler eventHandler;
 
 		int tScore = 0;
-		int tEnt = 0;
+		//int tEnt = 0;
 		string tTeamName = "";
 
 		int ctScore = 0;
-		int ctEnt = 0;
+		//int ctEnt = 0;
 		string ctTeamName = "";
 
 		Guid SCORE_TOTAL_ID;
 		Guid TEAM_NAME_ID;
 		Guid CLAN_NAME_ID;
 
-		public ScorePacketHandler(DemoPacketHandler eventHandler)
+		public ScorePacketHandler(DemoPacketContainer container, DemoEventHandler eventHandler)
 		{
+			this.container = container;
 			this.eventHandler = eventHandler;
 		}
 
@@ -91,12 +93,12 @@
 		{
 			if (property.id == SCORE_TOTAL_ID)
 			{
-				if (entity.id == tEnt)
+				if (entity.id == container.tEnt)
 				{
 					eventHandler.InvokeScoreChanged(v, tScore, Team.Terrorists);
 					tScore = v;
 				}
-				else if (entity.id == ctEnt)
+				else if (entity.id == container.ctEnt)
 				{
 					eventHandler.InvokeScoreChanged(v, ctScore, Team.CounterTerrorists);
 					ctScore = v;
@@ -110,20 +112,20 @@
 			{
 				if (v == "TERRORIST")
 				{
-					tEnt = entity.id;
+					container.tEnt = entity.id;
 				}
 				else if (v == "CT")
 				{
-					ctEnt = entity.id;
+					container.ctEnt = entity.id;
 				}
 			}
 			else if (property.id == CLAN_NAME_ID)
 			{
-				if (entity.id == tEnt)
+				if (entity.id == container.tEnt)
 				{
 					tTeamName = v;
 				}
-				else if (entity.id == ctEnt)
+				else if (entity.id == container.ctEnt)
 				{
 					ctTeamName = v;
 				}
@@ -132,12 +134,12 @@
 
 		public int GetCTID()
 		{
-			return ctEnt;
+			return container.ctEnt;
 		}
 
 		public int GetTID()
 		{
-			return tEnt;
+			return container.tEnt;
 		}
 	}
 }

@@ -24,7 +24,16 @@ namespace DemoReader
 
 		int ServerClassesBits;
 
-		public DemoPacketHandler eventHandler = new DemoPacketHandler();
+		public DemoPacketContainer container;
+		public DemoEventHandler eventHandler;
+		public DemoPacketHandler packetHandler;
+
+		public DemoReader()
+		{
+			container = new DemoPacketContainer();
+			eventHandler = new DemoEventHandler(container, players);
+			packetHandler = new DemoPacketHandler(container, eventHandler);
+		}
 
 		public void Analyze(string path)
 		{
@@ -89,7 +98,7 @@ namespace DemoReader
 			ServerClasses = GetServerClasses(ref spanStream, DataTables);
 			ServerClassesBits = BitOperations.Log2(BitOperations.RoundUpToPowerOf2((uint)ServerClasses.Length));
 
-			eventHandler.Init(ServerClasses);
+			packetHandler.Init(ServerClasses);
 
 			return true;
 		}
@@ -113,7 +122,7 @@ namespace DemoReader
 				switch (cmd)
 				{
 					case SVCMessages.svc_PacketEntities:
-						PacketEntities.Parse(cmdStream, ServerClasses, entities, instanceBaselines, ServerClassesBits, eventHandler);
+						PacketEntities.Parse(cmdStream, ServerClasses, entities, instanceBaselines, ServerClassesBits, packetHandler);
 						break;
 					case SVCMessages.svc_CreateStringTable:
 					{
@@ -144,6 +153,7 @@ namespace DemoReader
 						var keyStream = new SpanStream<byte>(e.keys.Span);
 						int eventId = e.eventId;
 
+						eventHandler.Update(ref e, ref CollectionsMarshal.AsSpan(EventDescriptors)[eventId]);
 						break;
 					default:
 						break;

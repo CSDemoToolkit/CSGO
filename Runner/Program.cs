@@ -20,6 +20,7 @@ namespace Runner
         static void Main(string[] args)
         {
 			demoReader.eventHandler.ScoreChange += EventHandler_ScoreChange;
+			demoReader.eventHandler.PlayerDeath += EventHandler_PlayerDeath; ;
 
             int useDemoInfo = int.Parse(Console.ReadLine());
 			Console.WriteLine($"Using demo {useDemoInfo}");
@@ -40,6 +41,11 @@ namespace Runner
             Console.WriteLine(sw.ElapsedMilliseconds);
         }
 
+		private static void EventHandler_PlayerDeath(ref Player player, ref Player attacker, ref Player assister)
+		{
+			//Console.WriteLine($"Player {player.Name} was killed by {attacker.Name}");
+		}
+
 		private static void EventHandler_ScoreChange(int oldScore, int newScore, DemoReader.Team team)
 		{
 			switch (team)
@@ -55,8 +61,8 @@ namespace Runner
 			}
 
 			Console.WriteLine($"CT: {ct}, T: {t}");
-			Console.WriteLine($"	{demoReader.eventHandler.bombsites[1].Center}");
-			Console.WriteLine($"	Player 0: {demoReader.eventHandler.players[0].Position}");
+			Console.WriteLine($"	{demoReader.container.bombsites[1].Center}");
+			Console.WriteLine($"	Player 0: {demoReader.container.players[0].Position}");
 		}
 	}
 }

@@ -6,14 +6,14 @@
 		const int MAX_EDICT_BITS = 11;
 		const int INDEX_MASK = (1 << MAX_EDICT_BITS) - 1;
 
-		DemoPacketHandler eventHandler;
+		DemoPacketHandler packetHandler;
 
 		Guid INFERNO_ID;
 		Guid OWNER_ENTITY_ID;
 
-		public InfernoPacketHandler(DemoPacketHandler eventHandler)
+		public InfernoPacketHandler(DemoPacketHandler packetHandler)
 		{
-			this.eventHandler = eventHandler;
+			this.packetHandler = packetHandler;
 		}
 
 		public void Init(Span<ServerClass> serverClasses)
@@ -29,9 +29,9 @@
 				if (property.id == OWNER_ENTITY_ID)
 				{
 					int playerID = v & INDEX_MASK;
-					if (!eventHandler.infernos.TryAdd(entity.id, new Inferno { Owner = playerID }))
+					if (!packetHandler.container.infernos.TryAdd(entity.id, new Inferno { Owner = playerID }))
 					{
-						eventHandler.infernos[entity.id] = new Inferno { Owner = playerID };
+						packetHandler.container.infernos[entity.id] = new Inferno { Owner = playerID };
 					}
 				}
 			}
@@ -41,7 +41,7 @@
 		{
 			if (serverClass.id == INFERNO_ID)
 			{
-				eventHandler.infernos.Remove(entity.id);
+				packetHandler.container.infernos.Remove(entity.id);
 			}
 		}
 	}
