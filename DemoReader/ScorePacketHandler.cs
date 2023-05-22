@@ -59,9 +59,9 @@
 		}
 	}
 
-	public class ScoreEventHandler
+	public class ScorePacketHandler
 	{
-		DemoEventHandler eventHandler;
+		DemoPacketHandler eventHandler;
 
 		int tScore = 0;
 		int tEnt = 0;
@@ -75,7 +75,7 @@
 		Guid TEAM_NAME_ID;
 		Guid CLAN_NAME_ID;
 
-		public ScoreEventHandler(DemoEventHandler eventHandler)
+		public ScorePacketHandler(DemoPacketHandler eventHandler)
 		{
 			this.eventHandler = eventHandler;
 		}

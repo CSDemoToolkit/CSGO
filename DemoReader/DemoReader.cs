@@ -24,7 +24,7 @@ namespace DemoReader
 
 		int ServerClassesBits;
 
-		public DemoEventHandler eventHandler = new DemoEventHandler();
+		public DemoPacketHandler eventHandler = new DemoPacketHandler();
 
 		public void Analyze(string path)
 		{
@@ -143,6 +143,7 @@ namespace DemoReader
 						var e = GameEvent.Parse(cmdStream);
 						var keyStream = new SpanStream<byte>(e.keys.Span);
 						int eventId = e.eventId;
+
 						break;
 					default:
 						break;
@@ -262,7 +263,7 @@ namespace DemoReader
 
 			for (int i = 0; i < serverClassCount; i++)
 			{
-				classes[i] = ServerClass.Parse(ref stream, dataTables);
+				classes[i] = ServerClass.Parse(ref stream, classes.AsSpan().Slice(0, i), dataTables);
 			}
 
 			return classes;

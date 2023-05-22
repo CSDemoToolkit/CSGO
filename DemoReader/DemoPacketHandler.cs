@@ -51,73 +51,87 @@ namespace DemoReader
 		public int Owner;
 	}
 
+	public struct Equipment
+	{
+
+	}
+
 	public delegate void ScoreChange(int oldScore, int newScore, Team team);
 	public delegate void GamePhaseChange(GamePhase phase);
 	public delegate void RoundWinStatusChange(RoundWinStatus status);
 
-	public class DemoEventHandler
+	public class DemoPacketHandler
 	{
+		public const int MAX_EDICT_BITS = 11;
+		public const int INDEX_MASK = (1 << MAX_EDICT_BITS) - 1;
+		public const int MAX_ENTITIES = 1 << MAX_EDICT_BITS;
+
 		public event ScoreChange ScoreChange;
 		public event GamePhaseChange GamePhaseChange;
 		public event RoundWinStatusChange RoundWinStatusChange;
 
-		ScoreEventHandler scoreEventHandler;
-		PlayerEventHandler playerEventHandler;
-		GameRulesEventHandler gameRulesEventHandler;
-		BombsiteEventHandler bombsiteEventHandler;
-		InfernoEventHandler infernoEventHandler;
+		ScorePacketHandler scorePacketHandler;
+		PlayerPacketHandler playerPacketHandler;
+		GamerRulePacketHandler gamePacketEventHandler;
+		BombsitePacketHandler bombsitePacketHandler;
+		InfernoPacketHandler infernoPacketHandler;
+		WeaponPacketHandler weaponPacketHandler;
 
 		public Player[] players = new Player[32];
 		public int[,] PlayerEquipment = new int[32, 64];
 		public Bombsite[] bombsites = new Bombsite[2];
+		public Equipment[] equipment = new Equipment[MAX_ENTITIES];
 
 		public Dictionary<int, Inferno> infernos = new Dictionary<int, Inferno>();
 
-		public DemoEventHandler()
+		public DemoPacketHandler()
 		{
-			scoreEventHandler = new ScoreEventHandler(this);
-			playerEventHandler = new PlayerEventHandler(this, scoreEventHandler);
-			gameRulesEventHandler = new GameRulesEventHandler(this);
-			bombsiteEventHandler = new BombsiteEventHandler(this);
-			infernoEventHandler = new InfernoEventHandler(this);
+			scorePacketHandler = new ScorePacketHandler(this);
+			playerPacketHandler = new PlayerPacketHandler(this, scorePacketHandler);
+			gamePacketEventHandler = new GamerRulePacketHandler(this);
+			bombsitePacketHandler = new BombsitePacketHandler(this);
+			infernoPacketHandler = new InfernoPacketHandler(this);
+			weaponPacketHandler = new WeaponPacketHandler(this);
 		}
 
 		public void Init(Span<ServerClass> serverClasses)
 		{
-			scoreEventHandler.Init(serverClasses);
-			playerEventHandler.Init(serverClasses);
-			gameRulesEventHandler.Init(serverClasses);
-			bombsiteEventHandler.Init(serverClasses);
-			infernoEventHandler.Init(serverClasses);
+			scorePacketHandler.Init(serverClasses);
+			playerPacketHandler.Init(serverClasses);
+			gamePacketEventHandler.Init(serverClasses);
+			bombsitePacketHandler.Init(serverClasses);
+			infernoPacketHandler.Init(serverClasses);
+			weaponPacketHandler.Init(serverClasses);
 		}
 
 		public void Execute(ref ServerClass serverClass, ref Entity entity, ref SendProperty property, int v)
 		{
-			scoreEventHandler.Execute(ref entity, ref property, v);
-			playerEventHandler.Execute(ref serverClass, ref entity, ref property, v);
-			gameRulesEventHandler.Execute(ref serverClass, ref entity, ref property, v);
-			infernoEventHandler.Execute(ref serverClass, ref entity, ref property, v);
+			scorePacketHandler.Execute(ref entity, ref property, v);
+			playerPacketHandler.Execute(ref serverClass, ref entity, ref property, v);
+			gamePacketEventHandler.Execute(ref serverClass, ref entity, ref property, v);
+			infernoPacketHandler.Execute(ref serverClass, ref entity, ref property, v);
+			weaponPacketHandler.Execute(ref serverClass, ref entity, ref property, v);
 		}
 
 		public void Execute(ref ServerClass serverClass, ref Entity entity, ref SendProperty property, float v)
 		{
-			playerEventHandler.Execute(ref serverClass, ref entity, ref property, v);
+			playerPacketHandler.Execute(ref serverClass, ref entity, ref property, v);
 		}
 
 		public void Execute(ref ServerClass serverClass, ref Entity entity, ref SendProperty property, Vector3 v)
 		{
-			playerEventHandler.Execute(ref serverClass, ref entity, ref property, v);
-			bombsiteEventHandler.Execute(ref serverClass, ref entity, ref property, v);
+			playerPacketHandler.Execute(ref serverClass, ref entity, ref property, v);
+			bombsitePacketHandler.Execute(ref serverClass, ref entity, ref property, v);
 		}
 
 		public void Execute(ref ServerClass serverClass, ref Entity entity, ref SendProperty property, string v)
 		{
-			scoreEventHandler.Execute(ref entity, ref property, v);
+			scorePacketHandler.Execute(ref entity, ref property, v);
 		}
 
 		public void Destroy(ref ServerClass serverClass, ref Entity entity)
 		{
-			infernoEventHandler.Destroy(ref serverClass, ref entity);
+			infernoPacketHandler.Destroy(ref serverClass, ref entity);
 		}
 
 		internal void InvokeScoreChanged(int newScore, int oldScore, Team team)

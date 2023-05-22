@@ -2,9 +2,9 @@
 
 namespace DemoReader
 {
-	public class BombsiteEventHandler
+	public class BombsitePacketHandler
 	{
-		DemoEventHandler eventHandler;
+		DemoPacketHandler eventHandler;
 
 		Guid PLAYER_RESOURCE_ID;
 		Guid BASE_TRIGGER_ID;
@@ -13,7 +13,7 @@ namespace DemoReader
 		Guid VEC_MIN_ID;
 		Guid VEC_MAX_ID;
 
-		public BombsiteEventHandler(DemoEventHandler eventHandler)
+		public BombsitePacketHandler(DemoPacketHandler eventHandler)
 		{
 			this.eventHandler = eventHandler;
 		}

@@ -1,17 +1,16 @@
-﻿using System.Numerics;
+﻿using System.Linq;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 
 namespace DemoReader
 {
-	public class PlayerEventHandler
+	public class PlayerPacketHandler
 	{
-		const int MAX_EDICT_BITS = 11;
-		const int INDEX_MASK = (1 << MAX_EDICT_BITS) - 1;
-
-		DemoEventHandler eventHandler;
-		ScoreEventHandler scoreEventHandler;
+		DemoPacketHandler eventHandler;
+		ScorePacketHandler scoreEventHandler;
 
 		Guid IS_PLAYER_ID;
+		Guid WEAPON_BASE_ID;
 
 		Guid PLAYER_HEALTH_ID;
 		Guid PLAYER_ARMOR_ID;
@@ -40,7 +39,7 @@ namespace DemoReader
 		Guid[] PLAYER_WEAPON_AMMO_NUM_ID = new Guid[32];
 		Guid PLAYER_ACTIVE_WEAPON_ID;
 
-		public PlayerEventHandler(DemoEventHandler eventHandler, ScoreEventHandler scoreEventHandler)
+		public PlayerPacketHandler(DemoPacketHandler eventHandler, ScorePacketHandler scoreEventHandler)
 		{
 			this.eventHandler = eventHandler;
 			this.scoreEventHandler = scoreEventHandler;
@@ -49,6 +48,7 @@ namespace DemoReader
 		public void Init(Span<ServerClass> serverClasses)
 		{
 			IS_PLAYER_ID = serverClasses.FindServerClass("CCSPlayer").id;
+			WEAPON_BASE_ID = serverClasses.FindServerClass("CWeaponCSBase").id;
 
 			PLAYER_HEALTH_ID = serverClasses.FindProperty("CCSPlayer", "m_iHealth").id;
 			PLAYER_ARMOR_ID = serverClasses.FindProperty("CCSPlayer", "m_ArmorValue").id;
@@ -153,15 +153,15 @@ namespace DemoReader
 						if (PLAYER_WEAPON_NUM_ID[i] != property.id)
 							continue;
 
-						int index = v & INDEX_MASK;
-						player.Weapons[i] = index != INDEX_MASK ? index : 0;
+						int index = v & DemoPacketHandler.INDEX_MASK;
+						player.Weapons[i] = index != DemoPacketHandler.INDEX_MASK ? index : 0;
 
 						break;
 					}
 				}
 				else if (property.id == PLAYER_ACTIVE_WEAPON_ID)
 				{
-					player.ActiveWeapon = v & INDEX_MASK;
+					player.ActiveWeapon = v & DemoPacketHandler.INDEX_MASK;
 				}
 				else if (property.parent == PLAYER_WEAPON_AMMO_PARENT_ID)
 				{

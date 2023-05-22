@@ -26,7 +26,7 @@ namespace DemoReader
         public int baseline;
         public int deltaFrom;
 
-        public static PacketEntities Parse(SpanStream<byte> stream, Span<ServerClass> serverClasses, Span<Entity> entities, ArraySegment<byte>[] instanceBaselines, int serverClassesBits, DemoEventHandler eventHandler)
+        public static PacketEntities Parse(SpanStream<byte> stream, Span<ServerClass> serverClasses, Span<Entity> entities, ArraySegment<byte>[] instanceBaselines, int serverClassesBits, DemoPacketHandler eventHandler)
         {
             PacketEntities packetEntities = new PacketEntities();
 
@@ -191,7 +191,7 @@ namespace DemoReader
 		static SendProperty[] entries = new SendProperty[4096];
 		static readonly int SEND_PROPERTY_SIZE = sizeof(SendProperty);
 
-		unsafe static void ApplyUpdate(ref ServerClass serverClass, ref Entity entity, ref SpanBitStream bitStream, in Span<SendProperty> properties, DemoEventHandler eventHandler)
+		unsafe static void ApplyUpdate(ref ServerClass serverClass, ref Entity entity, ref SpanBitStream bitStream, in Span<SendProperty> properties, DemoPacketHandler eventHandler)
 		{
 			// Apply
 			bitStream.ReadBit(); // This bit was called new way. It affected TryReadFieldIndex
@@ -254,7 +254,7 @@ namespace DemoReader
 			}
 		}
 
-		static void DecodeProp(ref ServerClass serverClass, ref Entity entity, ref SpanBitStream bitStream, ref SendProperty property, in Span<SendProperty> properties, DemoEventHandler eventHandler)
+		static void DecodeProp(ref ServerClass serverClass, ref Entity entity, ref SpanBitStream bitStream, ref SendProperty property, in Span<SendProperty> properties, DemoPacketHandler eventHandler)
         {
 			switch (property.type)
 			{

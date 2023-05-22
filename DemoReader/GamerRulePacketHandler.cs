@@ -1,14 +1,14 @@
 ﻿namespace DemoReader
 {
-	public class GameRulesEventHandler
+	public class GamerRulePacketHandler
 	{
-		DemoEventHandler eventHandler;
+		DemoPacketHandler eventHandler;
 
 		Guid GAME_RULES_PROXY_ID;
 		Guid GAME_PHASE_ID;
 		Guid ROUND_WIN_STATUS_ID;
 
-		public GameRulesEventHandler(DemoEventHandler eventHandler)
+		public GamerRulePacketHandler(DemoPacketHandler eventHandler)
 		{
 			this.eventHandler=eventHandler;
 		}

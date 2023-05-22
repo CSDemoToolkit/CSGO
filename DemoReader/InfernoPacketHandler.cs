@@ -1,16 +1,17 @@
 ﻿namespace DemoReader
 {
-	public class InfernoEventHandler
+
+	public class InfernoPacketHandler
 	{
 		const int MAX_EDICT_BITS = 11;
 		const int INDEX_MASK = (1 << MAX_EDICT_BITS) - 1;
 
-		DemoEventHandler eventHandler;
+		DemoPacketHandler eventHandler;
 
 		Guid INFERNO_ID;
 		Guid OWNER_ENTITY_ID;
 
-		public InfernoEventHandler(DemoEventHandler eventHandler)
+		public InfernoPacketHandler(DemoPacketHandler eventHandler)
 		{
 			this.eventHandler = eventHandler;
 		}

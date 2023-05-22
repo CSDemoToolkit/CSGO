@@ -10,10 +10,11 @@ namespace DemoReader
         public string name;
         public string dtName;
 		public SendProperty[] properties;
+		public int[] baseClasses;
 
 		public Guid id;
 
-		public static ServerClass Parse(ref SpanStream<byte> stream, List<SendTable> dataTables)
+		public static ServerClass Parse(ref SpanStream<byte> stream, Span<ServerClass> serverClasses, List<SendTable> dataTables)
         {
             var serverClass = new ServerClass();
             serverClass.classID = stream.ReadShort();
@@ -25,7 +26,11 @@ namespace DemoReader
 			//TODO: This can probably be further made readable but i cannot be bothered now
 
 			var excludes = new List<SendProperty>();
-			GetExcludes(dataTables[serverClass.dataTableID], dataTables, excludes, true);
+			GetExcludes(dataTables[serverClass.dataTableID], dataTables, excludes);
+
+			//var baseClasses = new List<int>();
+			//GetBaseclasses(dataTables[serverClass.dataTableID], serverClasses, baseClasses);
+			//serverClass.baseClasses = baseClasses.ToArray();
 
 			var flattendProps = new List<SendProperty>();
 			GatherProps(dataTables[serverClass.dataTableID], flattendProps, excludes, dataTables, Guid.Empty, "");
@@ -52,23 +57,39 @@ namespace DemoReader
 			return serverClass;
         }
 
-		static IEnumerable<SendProperty> GetExcludes(in SendTable table, List<SendTable> dataTables, List<SendProperty> excludes, bool collectBaseClasses)
+		static void GetExcludes(in SendTable table, List<SendTable> dataTables, List<SendProperty> excludes)
 		{
 			excludes.AddRange(table.properties.Where(x => x.flags.HasFlag(SendPropertyFlags.Exclude)));
 
 			foreach (var prop in table.properties.Where(x => x.type == SendPropertyType.DataTable))
 			{
-				if (collectBaseClasses && prop.varName == "baseclass")
+				GetExcludes(dataTables.Find(x => x.netTableName == prop.dtName), dataTables, excludes);
+			}
+		}
+
+		static void GetBaseclasses(in SendTable table, Span<ServerClass> serverClasses, List<int> baseClasses)
+		{
+			foreach (var prop in table.properties.Where(x => x.type == SendPropertyType.DataTable))
+			{
+				if (prop.varName == "baseclass")
 				{
-					GetExcludes(dataTables.Find(x => x.netTableName == prop.dtName), dataTables, excludes, true);
+					baseClasses.Add(IndexOfTableName(serverClasses, prop.dtName));
+					GetBaseclasses(table, serverClasses, baseClasses);
 				}
-				else
+			}
+		}
+
+		static int IndexOfTableName(Span<ServerClass> serverClasses, string dtName)
+		{
+			for (int i = 0; i < serverClasses.Length; i++)
+			{
+				if (serverClasses[i].dtName == dtName)
 				{
-					GetExcludes(dataTables.Find(x => x.netTableName == prop.dtName), dataTables, excludes, false);
+					return i;
 				}
 			}
 
-			return excludes;
+			throw new Exception($"Server class '{dtName}' not found.");
 		}
 
 		static bool IsPropExcluded(SendTable table, SendProperty property, IEnumerable<SendProperty> excludes)
