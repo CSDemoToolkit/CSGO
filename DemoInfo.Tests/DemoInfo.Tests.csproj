@@ -27,7 +27,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CSGO\CSGO.csproj" />
-    <ProjectReference Include="..\DemoInfo\DemoInfo.csproj" />
   </ItemGroup>
 
 </Project>

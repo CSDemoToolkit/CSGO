@@ -11,7 +11,6 @@ namespace Runner
         static HttpClient faceitClient = Faceit.GetClient();
         static HttpClient gamerClient = Gamer.GetClient();
 
-		static Demo demo = new();
 		static DemoReader.DemoReader demoReader = new();
 
 		static int t = 0;
@@ -22,20 +21,10 @@ namespace Runner
 			demoReader.eventHandler.ScoreChange += EventHandler_ScoreChange;
 			demoReader.eventHandler.PlayerDeath += EventHandler_PlayerDeath; ;
 
-            int useDemoInfo = int.Parse(Console.ReadLine());
-			Console.WriteLine($"Using demo {useDemoInfo}");
-
             Stopwatch sw = Stopwatch.StartNew();
 			for (int i = 0; i < 1; i++)
 			{
-				if (useDemoInfo == 1)
-				{
-					demo.Analyze("Demos/demo1.dem");
-				}
-				else
-				{
-					demoReader.Analyze("Demos/demo1.dem");
-				}
+				demoReader.Analyze("Demos/demo1.dem");
 			}
             sw.Stop();
             Console.WriteLine(sw.ElapsedMilliseconds);

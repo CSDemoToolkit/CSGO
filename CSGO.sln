@@ -9,13 +9,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CSGO.API", "CSGO.API\CSGO.A
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Runner", "Runner\Runner.csproj", "{82A4C001-3CB3-4CA9-A1E6-2F250E0383CC}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DemoInfo", "DemoInfo\DemoInfo.csproj", "{BE9DB651-33AF-40A3-8AA4-54E4093C26F2}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DemoReader", "DemoReader\DemoReader.csproj", "{DCCA9716-0555-485B-AEF5-A3C809B17A36}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{F728EF86-BEC6-4399-9F74-0574680591DE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemoInfo.Tests", "DemoInfo.Tests\DemoInfo.Tests.csproj", "{577B739F-9209-46F4-94EC-312779C376A7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DemoInfo.Tests", "DemoInfo.Tests\DemoInfo.Tests.csproj", "{577B739F-9209-46F4-94EC-312779C376A7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -56,16 +54,6 @@ Global
 		{82A4C001-3CB3-4CA9-A1E6-2F250E0383CC}.SavePropValues|Any CPU.Build.0 = Debug|Any CPU
 		{82A4C001-3CB3-4CA9-A1E6-2F250E0383CC}.YoloDebug|Any CPU.ActiveCfg = Debug|Any CPU
 		{82A4C001-3CB3-4CA9-A1E6-2F250E0383CC}.YoloDebug|Any CPU.Build.0 = Debug|Any CPU
-		{BE9DB651-33AF-40A3-8AA4-54E4093C26F2}.Bitstream-Debugging|Any CPU.ActiveCfg = Debug|Any CPU
-		{BE9DB651-33AF-40A3-8AA4-54E4093C26F2}.Bitstream-Debugging|Any CPU.Build.0 = Debug|Any CPU
-		{BE9DB651-33AF-40A3-8AA4-54E4093C26F2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{BE9DB651-33AF-40A3-8AA4-54E4093C26F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{BE9DB651-33AF-40A3-8AA4-54E4093C26F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{BE9DB651-33AF-40A3-8AA4-54E4093C26F2}.Release|Any CPU.Build.0 = Release|Any CPU
-		{BE9DB651-33AF-40A3-8AA4-54E4093C26F2}.SavePropValues|Any CPU.ActiveCfg = Debug|Any CPU
-		{BE9DB651-33AF-40A3-8AA4-54E4093C26F2}.SavePropValues|Any CPU.Build.0 = Debug|Any CPU
-		{BE9DB651-33AF-40A3-8AA4-54E4093C26F2}.YoloDebug|Any CPU.ActiveCfg = Debug|Any CPU
-		{BE9DB651-33AF-40A3-8AA4-54E4093C26F2}.YoloDebug|Any CPU.Build.0 = Debug|Any CPU
 		{DCCA9716-0555-485B-AEF5-A3C809B17A36}.Bitstream-Debugging|Any CPU.ActiveCfg = Debug|Any CPU
 		{DCCA9716-0555-485B-AEF5-A3C809B17A36}.Bitstream-Debugging|Any CPU.Build.0 = Debug|Any CPU
 		{DCCA9716-0555-485B-AEF5-A3C809B17A36}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
